@@ -261,7 +261,7 @@ int get_obs_fast_info_from_redis(faststatus_t * faststatus,
 		for(RAi=7, DECi=8, beam=0; beam<19; RAi += 2, DECi += 2, beam++) {
 			faststatus->POINTRA[beam]   = atof(reply->element[RAi]->str);
 			faststatus->POINTDEC[beam]  = atof(reply->element[DECi]->str);
-//fprintf(stderr, "beam %d i %d ra %f\n", beam, RAi, atof(reply->element[RAi]->str));
+//fprintf(stderr, "time %ld %f beam %d i %d ra %f dec %f\n", faststatus->TIME, faststatus->TIMEFRAC, beam, RAi, atof(reply->element[RAi]->str), atof(reply->element[DECi]->str));
 		}
 		faststatus->CLOCKFRQ = CLOCK_FREQ; 	// hard coded
 	}

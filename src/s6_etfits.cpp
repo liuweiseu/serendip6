@@ -279,7 +279,7 @@ int write_etfits_fast(s6_output_databuf_t *db, int block_idx, etfits_t *etf, fas
         etf->hits_hdr[i].ra      = faststatus_p->POINTRA[etf->primary_hdr.beam];
         etf->hits_hdr[i].dec     = faststatus_p->POINTDEC[etf->primary_hdr.beam];
         etf->hits_hdr[i].beampol = etf->primary_hdr.beam * 2 + etf->primary_hdr.pol;       
-fprintf(stderr, "beam %d pol %d beampol %d\n", etf->primary_hdr.beam, etf->primary_hdr.pol, etf->hits_hdr[i].beampol);
+//fprintf(stderr, "beam %d pol %d beampol %d\n", etf->primary_hdr.beam, etf->primary_hdr.pol, etf->hits_hdr[i].beampol);
     }
 
     if(! *status_p) write_integration_header_fast(etf, faststatus_p);
@@ -870,7 +870,7 @@ int write_hits(s6_output_databuf_t *db, int block_idx, etfits_t *etf) {
             int borspol = bors * N_POLS_PER_BEAM + input;
             int hit_j=0;
             nhits_this_input=0;
-fprintf(stderr, "input %d bors %d borspol %d\n", input, bors, borspol);
+//fprintf(stderr, "input %d bors %d borspol %d\n", input, bors, borspol);
             for(int hit_i=0; hit_i < (size_t)db->block[block_idx].header.nhits[bors]; hit_i++) {
 #ifdef SOURCE_FAST
 		if(input == 0) {	// only 1 input for FAST but pol could be >= 0

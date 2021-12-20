@@ -1772,7 +1772,7 @@ if(use_thread_sync) cudaThreadSynchronize();
     if(use_total_gpu_timer) cout << "Total spectroscopy() time:\t" << total_gpu_timer.getTime() << endl;
     if(use_total_gpu_timer) total_gpu_timer.reset();
 
-    cout<<"------------------------------------------------------------------------------------------"<<endl;
+//    cout<<"------------------------------------------------------------------------------------------"<<endl;
     if(track_gpu_memory) get_gpu_mem_info("right before return to gpu thread");
     return total_nhits;
 }
