@@ -68,6 +68,8 @@ PHAPOSX =                    *
 PHAPOSY =                    *
 PHAPOSZ =                    *
 ANGLEM  =                    *
+ADCRMS =		     *
+ADCRMSTM =		     *
 ### ADC RMS Values ###
 # Not yet implemented
 #

@@ -144,6 +144,9 @@ static void *run(hashpipe_thread_args_t * args)
 #ifdef SOURCE_FAST
 	etf.primary_hdr.beam = floor(db->block[block_idx].header.sid / 2);
 	etf.primary_hdr.pol  = db->block[block_idx].header.sid % 2;
+        hgetr8(st.buf, "ADCRMS", &(faststatus.ADCRMS));
+        hgeti8(st.buf, "ADCRMSTM", &(faststatus.ADCRMSTM));
+//fprintf(stderr, "rms %lf\n", faststatus_p->ADCRMS);
 #endif
 
 		// time stamp for this block of hits
@@ -189,6 +192,22 @@ static void *run(hashpipe_thread_args_t * args)
                 CLEAR_BIT(idle_flag, idle_redis_error);
             }
         }
+#ifdef SOURCE_FAST
+#if 0
+        // rms check
+        if(faststatus.ADCRMS < RMS_THRESH) {
+            if(!BIT_IS_SET(idle_flag, idle_bad_rms)) {   // if bit not already set
+                hashpipe_warn(__FUNCTION__, "Voltage RMS is too low - adding as an idle condition");
+                SET_BIT(idle_flag, idle_bad_rms);
+            }
+        } else {
+            if(BIT_IS_SET(idle_flag, idle_bad_rms)) {    // if bit is currently set
+                hashpipe_warn(__FUNCTION__, "Voltage RMS is good - removing as an idle condition");
+                CLEAR_BIT(idle_flag, idle_bad_rms);
+            }
+        }
+#endif
+#endif
 #ifdef SOURCE_DIBAS
         // receiver check
         if(!atoi(gbtstatus.IFV1BW)) {

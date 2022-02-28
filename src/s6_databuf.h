@@ -85,6 +85,9 @@
 #define N_OUTPUT_BLOCKS         3
 // for FAST, the clock frequency is hard set to 1GHz, expressed here in MHz
 #define CLOCK_FREQ		1000.0
+#define RMS_LENGTH		1000
+#define RMS_THRESH		0
+#define ACQUIRE_METADATA	1
 #endif
 
 //#define N_COARSE_CHAN_PER_SUBSPECTRUM   (N_COARSE_CHAN / N_SUBSPECTRA_PER_SPECTRUM) 

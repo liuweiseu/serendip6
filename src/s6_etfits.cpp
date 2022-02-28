@@ -619,6 +619,9 @@ int write_integration_header_fast(etfits_t * etf, faststatus_t *faststatus_p) {
     if(! *status_p) fits_update_key(etf->fptr, TDOUBLE, "PHAPOSZ", &(faststatus_p->PHAPOSZ), NULL, status_p);
     if(! *status_p) fits_update_key(etf->fptr, TDOUBLE, "ANGLEM", &(faststatus_p->ANGLEM), NULL, status_p);
 
+    if(! *status_p) fits_update_key(etf->fptr, TDOUBLE, "ADCRMS", &(faststatus_p->ADCRMS), NULL, status_p);
+    if(! *status_p) fits_update_key(etf->fptr, TINT,    "ADCRMSTM", &(faststatus_p->ADCRMSTM), NULL, status_p);
+
     if (*status_p) {
         hashpipe_error(__FUNCTION__, "Error writing integration header");
         //fprintf(stderr, "Error writing integration header.\n");

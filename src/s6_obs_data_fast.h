@@ -11,7 +11,7 @@
 #define CURRENT_MJD ((time(NULL) / 86400.0 ) + 40587.0)             // 40587.0 is the MJD of the unix epoch
 
 // idle status reasons bitmap
-#define idle_nibble_01_1bit                     0x000000000000001; // saving these 4 for something important
+#define idle_bad_rms                            0x000000000000001; // saving these 4 for something important
 #define idle_nibble_01_2bit                     0x000000000000002;
 #define idle_nibble_01_4bit                     0x000000000000004;
 #define idle_nibble_01_8bit                     0x000000000000008;
@@ -34,9 +34,10 @@ typedef struct faststatus {
 
    double   CLOCKFRQ;
 
-   int	    ADCRMSTM;							// ADC RMS's 
-   double   ADCRMSP0;							// polarization 0
-   double   ADCRMSP1;							// polarization 1
+   double   ADCRMS;							// ADC RMS
+   time_t   ADCRMSTM;							// ADC RMS timestamp 
+   //double   ADCRMSP0;							// polarization 0
+   //double   ADCRMSP1;							// polarization 1
 
    int      DUMPTIME;
    int      DUMPVOLT;

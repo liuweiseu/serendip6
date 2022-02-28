@@ -24,6 +24,7 @@
 #include "hashpipe.h"
 #include "s6_databuf.h"
 #include "s6GPU.h"
+#include "s6_obs_data_fast.h"
 
 #define ELAPSED_NS(start,stop) \
   (((int64_t)stop.tv_sec-start.tv_sec)*1000*1000*1000+(stop.tv_nsec-start.tv_nsec))
@@ -99,6 +100,12 @@ static void *run(hashpipe_thread_args_t * args)
     struct timespec start, stop;
     uint64_t elapsed_gpu_ns  = 0;
     uint64_t gpu_block_count = 0;
+
+#ifdef SOURCE_FAST
+    faststatus_t faststatus;
+    faststatus_t * faststatus_p = &faststatus;
+#endif
+
 
 #if 0
     // raise this thread to maximum scheduling priority
@@ -228,6 +235,23 @@ static void *run(hashpipe_thread_args_t * args)
             int n_bors = N_SUBSPECTRA_PER_SPECTRUM;
             uint64_t n_bytes_per_bors  = N_BYTES_PER_SUBSPECTRUM * N_FINE_CHAN;
 #elif SOURCE_FAST
+#if 1
+	    // first get the RMS and determine if data are good
+	    char * samples = (char *) &db_in->block[curblock_in].data;
+	    double sum_squared, rms;
+	    int rms_i;
+	    for(rms_i = 0, sum_squared = 0; rms_i < RMS_LENGTH; rms_i++) {
+	    	//val = db_in->block[curblock_in].data[rms_i];
+        	sum_squared += samples[rms_i] * samples[rms_i];
+//fprintf(stderr, "val %d sum_squared %lf\n", (int)samples[rms_i], sum_squared);
+	    }
+    	    rms = sqrt((double)sum_squared/RMS_LENGTH);
+//fprintf(stderr, "rms %lf\n", rms);	
+	    //db_out->block[curblock_out].header.voltage_rms = rms;
+  	    faststatus_p->ADCRMS = rms;
+  	    faststatus_p->ADCRMSTM = time(NULL);
+#endif
+
             // At FAST, data are not grouped
             int n_bors = N_SUBSPECTRA_PER_SPECTRUM;
             uint64_t n_bytes_per_bors  = N_BYTES_PER_SUBSPECTRUM * N_TIME_SAMPLES;
@@ -286,6 +310,10 @@ fprintf(stderr, "(n_)pol = %lu num_coarse_chan = %lu n_bytes_per_bors = %lu  bor
         hputr4(st.buf, "GPUMXERR", max_error);
         hputi4(st.buf, "GPUERCNT", error_count);
         hputi4(st.buf, "GPUMXECT", max_error_count);
+#ifdef SOURCE_FAST
+	hputr8(st.buf, "ADCRMS", faststatus_p->ADCRMS);
+	hputi8(st.buf, "ADCRMSTM", faststatus_p->ADCRMSTM);
+#endif
         hashpipe_status_unlock_safe(&st);
 
         // Mark output block as full and advance
