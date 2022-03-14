@@ -78,7 +78,7 @@ static void *run(hashpipe_thread_args_t * args)
                                                         //   respect other flags.
 
     // data driven idle bit indexes
-    int idle_redis_error = 1; 
+    //int idle_redis_error = 1; 
     int idle_zero_IFV1BW = 2; 
 
     size_t num_coarse_chan = 0;
@@ -153,7 +153,7 @@ static void *run(hashpipe_thread_args_t * args)
 		faststatus_p->TIME = db->block[block_idx].header.time_sec +
 						     db->block[block_idx].header.time_nsec/1e9;
 
-        hgeti4(st.buf, "IDLE", &idle);
+        //hgeti4(st.buf, "IDLE", &idle);
         hgeti4(st.buf, "TESTMODE", &testmode);
         if(!testmode) {
         //if(testmode) {
@@ -193,16 +193,16 @@ static void *run(hashpipe_thread_args_t * args)
             }
         }
 #ifdef SOURCE_FAST
-#if 0
+#if 1
         // rms check
         if(faststatus.ADCRMS < RMS_THRESH) {
             if(!BIT_IS_SET(idle_flag, idle_bad_rms)) {   // if bit not already set
-                hashpipe_warn(__FUNCTION__, "Voltage RMS is too low - adding as an idle condition");
+                hashpipe_warn(__FUNCTION__, "Voltage RMS (%lf) is too low - adding as an idle condition", faststatus.ADCRMS);
                 SET_BIT(idle_flag, idle_bad_rms);
             }
         } else {
             if(BIT_IS_SET(idle_flag, idle_bad_rms)) {    // if bit is currently set
-                hashpipe_warn(__FUNCTION__, "Voltage RMS is good - removing as an idle condition");
+                hashpipe_warn(__FUNCTION__, "Voltage RMS (%lf) is good - removing as an idle condition", faststatus.ADCRMS);
                 CLEAR_BIT(idle_flag, idle_bad_rms);
             }
         }
@@ -222,6 +222,7 @@ static void *run(hashpipe_thread_args_t * args)
             }
         }
 #endif
+//fprintf(stderr, "flag 0x%08x idle %d\n", idle_flag, idle);
         if(idle_flag) {
             if(!idle) {    // if not already idling
                 hashpipe_info(__FUNCTION__, "Data acquisition is idled");

@@ -11,10 +11,11 @@
 #define CURRENT_MJD ((time(NULL) / 86400.0 ) + 40587.0)             // 40587.0 is the MJD of the unix epoch
 
 // idle status reasons bitmap
-#define idle_bad_rms                            0x000000000000001; // saving these 4 for something important
-#define idle_nibble_01_2bit                     0x000000000000002;
-#define idle_nibble_01_4bit                     0x000000000000004;
-#define idle_nibble_01_8bit                     0x000000000000008;
+#define idle_redis_error                   0
+#define idle_bad_rms                       1 
+//#define idle_redis_error                   0x000000000000001
+//#define idle_bad_rms                       0x000000000000002 
+//#define idle_placeholder		   0x000000000000004
 
 typedef struct faststatus {
 
