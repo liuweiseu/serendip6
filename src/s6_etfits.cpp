@@ -274,8 +274,7 @@ int write_etfits_fast(s6_output_databuf_t *db, int block_idx, etfits_t *etf, fas
     // populate hits header data
     //for(int i=0; i < N_BEAMS*N_POLS_PER_BEAM; i++) {
     for(int i=0; i < N_BORS*N_POLS_PER_BEAM; i++) {
-        etf->hits_hdr[i].time    = (time_t)faststatus_p->TIME;   
-        //etf->hits_hdr[i].time    = time(NULL);      // TODO - placeholder until we get FAST metadata   
+        etf->hits_hdr[i].time    = db->block[block_idx].header.time_sec + (double)db->block[block_idx].header.time_nsec / 1000000000.0;
         etf->hits_hdr[i].ra      = faststatus_p->POINTRA[etf->primary_hdr.beam];
         etf->hits_hdr[i].dec     = faststatus_p->POINTDEC[etf->primary_hdr.beam];
         etf->hits_hdr[i].beampol = etf->primary_hdr.beam * 2 + etf->primary_hdr.pol;       
@@ -606,8 +605,7 @@ int write_integration_header_fast(etfits_t * etf, faststatus_t *faststatus_p) {
 
     if(! *status_p) fits_update_key(etf->fptr, TSTRING, "EXTNAME",  (char *)"FASTSTATUS",  NULL, status_p); 
 
-    if(! *status_p) fits_update_key(etf->fptr, TINT,    "TIME",     &faststatus_p->TIME,   NULL, status_p); 
-    if(! *status_p) fits_update_key(etf->fptr, TDOUBLE, "TIMEFRAC", &faststatus_p->TIMEFRAC,   NULL, status_p); 
+    if(! *status_p) fits_update_key(etf->fptr, TDOUBLE, "TIME",     &faststatus_p->TIME,   NULL, status_p); 
     if(! *status_p) fits_update_key(etf->fptr, TDOUBLE, "DUT1",     &faststatus_p->DUT1,   NULL, status_p); 
 
     if(! *status_p) fits_update_key(etf->fptr, TINT,    "COARCHID", &faststatus_p->coarse_chan_id,   NULL, status_p); 
