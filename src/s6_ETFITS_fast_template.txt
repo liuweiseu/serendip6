@@ -58,8 +58,7 @@ NMATRIX =                    1  / 1 dataset per row
 #
 COARCHID=                    *  / coarse channel ID
 CLOCKFRQ=                    *  / clock frequency - the sample rate, in MHz, of the instrument (TDOUBLE)
-TIME    =                    *  / unix time, seconds
-TIMEFRAC=                    *  / fractional seconds beyond TIME
+TIME    =                    *  / unix time, decimal seconds
 DUT1=                        *  / current UT1 - UTC difference that is being broadcast by NIST
 
 RECEIVER=                    *		
@@ -93,8 +92,7 @@ NMATRIX =                    1 / 1 dataset per row
 #
 ### ETFITS hits metadata ###
 #
-#TIME    =                    * / unix time of this integration - is this fine enough res? (TINT)
-TIME    =                    * / unix time (incl fractional sec) of this integration (TDOUBLE)
+TIME    =                    * / unix time (as fractional second) of this integration (TDOUBLE)
 RA      =                    * / derived from corrected scram azza (TDOUBLE)
 DEC     =                    * / derived from corrected scram azza (TDOUBLE)
 BORSPOL =                    * / 0-37 beam/pols (TINT)
