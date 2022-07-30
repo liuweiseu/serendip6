@@ -169,8 +169,10 @@ int get_obs_fast_info_from_redis(faststatus_t * faststatus,
 
     //const char * host_observatory = "10.128.8.8";
     //int port_observatory = 6379;
-    const char * host_observatory = "10.128.1.65";
-    int port_observatory = 8002;
+    //const char * host_observatory = "10.128.1.65";
+    //int port_observatory = 8002;
+    const char * host_observatory = "172.18.0.2";
+    int port_observatory = 6379;
     const char * host_pw = "fast";
 
     char computehostname[32];

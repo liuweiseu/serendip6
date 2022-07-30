@@ -1,5 +1,5 @@
 NVCC        = nvcc
-NVCCFLAGS   = -O3 --compiler-options '-fPIC' --shared -Xcompiler -Wall -arch=sm_35 -lrt -lcudart -lcufft -lineinfo -std=c++11
+NVCCFLAGS   = -O3 --compiler-options '-fPIC' --shared -Xcompiler -Wall -arch=sm_35 -lrt -lcudart -lcufft -lineinfo -std=c++14
 CC          = gcc
 # The user should specify, on the 'make' command line :
 # S6_LOCATION="-D SOURCE_DIBAS"
@@ -7,10 +7,11 @@ CC          = gcc
 # S6_LOCATION="-D SOURCE_S6"
 S6_LOCATION = 
 #S6_LIB_CCFLAGS     = -g -O3 -fPIC -shared -lstdc++ -mavx -msse4 
-S6_FAST_LIB_CCFLAGS     = -g -O3 -fPIC -shared -lstdc++ \
-		     -I. -I$(CUDA_DIR)/include -I$(CUDA_DIR)/targets/x86_64-linux/include -I/usr/local/include -I/usr/include/cfitsio -I. \
-		     -L. -L/usr/local/lib -L/usr/lib64 -L/usr/local/lib/hiredis \
-		     -lhashpipe -lS6GPU -lrt -lhiredis -lcfitsio -lm -std=c++11
+#S6_FAST_LIB_CCFLAGS     = -g -O3 -fPIC -shared -lstdc++ 
+S6_FAST_LIB_CCFLAGS     = -g  -fPIC -shared -lstdc++ \
+		     -I. -I$(CUDA_DIR)/include -I$(CUDA_DIR)/targets/x86_64-linux/include -I/usr/local/include -I. -I/usr/local/cfitsio/include\
+		     -L. -L/usr/local/lib -L/usr/lib64 -L/usr/local/lib/hiredis -L/usr/local/cfitsio/lib\
+		     -lhashpipe -lS6GPU -lrt -lhiredis -lcfitsio -lm -std=c++14
 S6OBS_AO_PROG_CCFLAGS = -g -lstdc++ \
 		     -I/usr/include/tcl \
 		     -I/usr/local/include \
@@ -33,11 +34,12 @@ S6OBS_TEST_OBS_GBT_PROG_CCFLAGS = -g -O3 -fPIC -lstdc++ -mavx -msse4 \
 S6GPUTEST_CCFLAGS  = -g \
 		     -I. -I/usr/local/cuda/include \
 		     -L. -L/usr/local/cuda/lib64 \
+			 -L/usr/local/cfitsio/lib \
 		     -lcudart -lrt -lcufft -lS6GPU  \
 		     -lcfitsio serendip6.so
 S6EXTRACT_PROG_CCFLAGS  = -g -lstdc++ \
 		     -I. -I/usr/local/cuda/include
-S6_CHAN2IF_CCFLAGS = -g -lstdc++
+S6_CHAN2IF_CCFLAGS = -g -lstdc++ -lm
 
 S6GPU_LIB_TARGET    = libS6GPU.so
 S6GPU_LIB_SOURCES   = s6GPU.cu
@@ -122,11 +124,11 @@ install-etc: obsPosition.dat utcToUt1.dat s6_ETFITS_template.txt
 	mkdir -p "$(DESTDIR)$(ETCDIR)"
 	install -p $^ "$(DESTDIR)$(ETCDIR)"
 
-install-lib: $(S6GPU_LIB_TARGET) $(S6_LIB_TARGET)
+install-lib: $(S6GPU_LIB_TARGET) $(S6_FAST_LIB_TARGET)
 	mkdir -p "$(DESTDIR)$(LIBDIR)"
 	install -p $^ "$(DESTDIR)$(LIBDIR)"
 
-install-bin: $(S6OBS_PROG_TARGET) 
+install-bin: $(S6OBS_GBT_PROG_TARGET) 
 	mkdir -p "$(DESTDIR)$(BINDIR)"
 	install -p $^ "$(DESTDIR)$(BINDIR)"
 
