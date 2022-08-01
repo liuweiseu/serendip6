@@ -163,7 +163,11 @@ static void *run(hashpipe_thread_args_t * args)
             rv = get_obs_gbt_info_from_redis(gbtstatus_p,   (char *)REDISHOST, 6379);
 #elif SOURCE_FAST
             rv = get_obs_fast_info_from_redis(faststatus_p, (char *)REDISHOST, 6379);
-            hputi4(st.buf, "DUMPVOLT", faststatus.DUMPVOLT);  // raw data dump request status
+            double meta_sec = (double)time(NULL) - faststatus.TIME;
+            hashpipe_status_lock_safe(&st);
+            hputr4(st.buf, "METASEC", meta_sec);   		// meta data age in secs
+            hputi4(st.buf, "DUMPVOLT", faststatus.DUMPVOLT);  	// raw data dump request status
+            hashpipe_status_unlock_safe(&st);
 #endif
         } else {
 #ifdef SOURCE_S6
