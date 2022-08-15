@@ -13,6 +13,7 @@
 // idle status reasons bitmap
 #define idle_redis_error                   0
 #define idle_bad_rms                       1 
+#define idle_meta_data_stale               2 
 //#define idle_redis_error                   0x000000000000001
 //#define idle_bad_rms                       0x000000000000002 
 //#define idle_placeholder		   0x000000000000004
@@ -21,6 +22,7 @@ typedef struct faststatus {
 
    double   TIME;		// fractional unix time from observatory redis timestamp
    double   DUT1;		// current UT1 - UTC difference that is being broadcast by NIST
+   double   TIME_LAG;		// diff, in secs, between current system time and faststatus time
 
    char     RECEIVER[FASTSTATUS_STRING_SIZE];  
 
