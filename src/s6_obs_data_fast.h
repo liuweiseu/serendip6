@@ -42,7 +42,7 @@ typedef struct faststatus {
    int      DUMPTIME;
    int      DUMPVOLT;
 
-   int       coarse_chan_id;                       // will always be 0 for FAST (not coarse channelized)
+   int      coarse_chan_id;                       // will always be 0 for FAST (not coarse channelized)
 } faststatus_t;
 
 int get_obs_fast_info_from_redis(faststatus_t *faststatus, char *hostname, int port);

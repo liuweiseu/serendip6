@@ -15,15 +15,16 @@ beam=2
 
 #iface_pol0=`myinterface.sh voltpol0`
 #iface_pol1=`myinterface.sh voltpol1`
-iface_pol0="enp3s0d1"
+iface_pol0="enp216s0f0"
+iface_pol1="enp216s0f1"
 
 # Remove old semaphore
 echo removing old semaphore, if any
 rm /dev/shm/sem.serendip6_gpu_sem_device_*
 
 # Setup parameters for two instances.
-#instance_i=("1" "2")
-instance_i=("1")
+instance_i=("1" "2")
+#instance_i=("1")
 log_timestamp=`date +%Y%m%d_%H%M%S`
 instances=(
   # NOTE: when changing any of the following it is good practice to run:
@@ -41,8 +42,8 @@ instances=(
   #
   # hashpipe command line parameters (serendip6 will run as hashpipe instances 1 and 2):
   " place holder for unused instance 0.  fastburst uses instance 0"
-  "--physcpubind=7,9,11   --membind=0 ${iface_pol0} 0   7  9 11  ${beam} 0  $log_timestamp" # Instance 1
-  "--physcpubind=15,17,19 --membind=0,1 ${iface_pol1} 1  15 17 19  ${beam} 1  $log_timestamp" # Instance 2
+  "--physcpubind=7,9,11   --membind=0 ${iface_pol0} 0   8  9 11  ${beam} 0  $log_timestamp" # Instance 1
+  "--physcpubind=15,17,19 --membind=0,1 ${iface_pol1} 1  12 17 19  ${beam} 1  $log_timestamp" # Instance 2
 )
 
 function init() {

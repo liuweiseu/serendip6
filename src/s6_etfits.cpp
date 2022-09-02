@@ -32,7 +32,7 @@ int init_etfits(etfits_t *etf) {
     etf->multifile             = 1;
     etf->integrations_per_file = 3;    // TODO place holder - should come from status shmem
     etf->integration_cnt       = 0;    
-    etf->max_file_size         = 1000000; // 1GB    TODO runtime config
+    etf->max_file_size         = 1000000000; // 1GB    TODO runtime config
 
     etf->s6_dir = getenv("S6_DIR");
     if (etf->s6_dir==NULL) {

@@ -1,0 +1,119 @@
+##################################################################
+# FITS Primary Header Block
+##################################################################
+#
+SIMPLE  =                    T  / file does conform to FITS standard
+BITPIX  =                    8  / number of bits per data pixel
+NAXIS   =                    0  / number of data axes
+EXTEND  =                    T  / FITS dataset may contain extensions
+BLOCKED =                    T  / Blocks of 2880 bytes
+ORIGIN  ='SERENDIP VI'          / File was created by the guppi_daq sw
+DATE    =                    *  / Date (dd/mm//yy) this file was written
+#
+### Core ETFITS header fields ###
+#
+HDRVER  = 1.0                   / Header version 
+S6HPCVER= '0.8.0'               / version of serendip6.so
+LBGPUVER= '0.8.0'               / version of libS6GPU.so
+HASHPVER= '0.1.0'               / version of hashpipe lib/app
+FPGAVER = '0.1.0'               / version of FPGA code
+TELESCOP=                    *  / Telescope name
+DATE-OBS=                    *  / Date of observation (YYYY-MM-DDThh:mm:ss UTC)
+TSYS    =                    *  / System temperature
+PROJID  =                    *  / Project name
+FRONTEND=                    *  /   Rx and feed ID
+OBSFREQ =                    *  / [MHz] Centre frequency for observation
+SITELONG= 79.839835             / Antenna longitude (degrees, float)
+SITELAT = 38.433121             / Antenna latitude (degrees, float)
+SITEELEV= 807.43                / Antenna elevation (metres, float)
+EQUINOX = 2000.0                / Equinox of coords (e.g. 2000.0) 
+FITSTYPE= 'ETFITS'              / FITS definition for pulsar data files
+INSTRUME= 'SERENDIP VI'         / Backend ID
+COORD_MD= 'J2000'               / Coordinate mode (J2000, GAL, ECLIP, etc.)
+NINPUTS =                    *  / Number of pols * number of subbands
+BANDWID =                    *  / Bandwidth of entire backend
+FREQRES =                    *  / Width of each original spectral channel
+NSUBBAND=                    *  / number of subbands
+NCHAN   =                    *  / Number of spectral bins per sub-band
+CHAN_BW =                    *  / bandwidth of each spectral bin (resolution)
+THRSHOLD=                    *  / S/N threshold for hit detection
+SMOOTHSC=                    *  / number of bins over which baseline 
+smoothing is performed
+#
+END
+##################################################################
+# ETFITS Binary Table Header Block - 1 per integration - no data
+##################################################################
+### Mandatory ETFITS header fields ###
+#
+XTENSION= BINTABLE              / FITS binary table
+BITPIX  =                    8  / Binary data
+NAXIS   =                    2  / 2-dimensional binary table
+NAXIS1  =                    *  / width of table in bytes 
+NAXIS2  =                    *  / Number of rows in table
+PCOUNT  =                    0  / size of special data area
+GCOUNT  =                    1  / one data group (required keyword)
+TFIELDS =                    *  / Number of fields per row
+EXTNAME = 'FASTSTATUS'           / name of this binary table extension
+NMATRIX =                    1  / 1 dataset per row
+#
+COARCHID=                    *  / coarse channel ID
+CLOCKFRQ=                    *  / clock frequency - the sample rate, in MHz, of the instrument (TDOUBLE)
+TIME    =                    *  / unix time, decimal seconds
+DUT1=                        *  / current UT1 - UTC difference that is being broadcast by NIST
+
+RECEIVER=                    *		
+
+PHAPOSX =                    *
+PHAPOSY =                    *
+PHAPOSZ =                    *
+ANGLEM  =                    *
+ADCRMS =		     *
+ADCRMSTM =		     *
+### ADC RMS Values ###
+# Not yet implemented
+#
+END
+##################################################################
+# ETFITS Binary Table Header Block - 1 per bors/pol per integration
+##################################################################
+#
+### Mandatory ETFITS header fields ###
+#
+XTENSION= BINTABLE             / FITS binary table
+BITPIX  =                    8 / Binary data
+NAXIS   =                    2 / 2-dimensional binary table
+NAXIS1  =                    * / width of table in bytes 
+NAXIS2  =                    * / Number of rows in table
+PCOUNT  =                    0 / size of special data area
+GCOUNT  =                    1 / one data group (required keyword)
+TFIELDS =                    * / Number of fields per row
+EXTNAME = 'ETHITS'             / name of this binary table extension
+NMATRIX =                    1 / 1 dataset per row
+#
+### ETFITS hits metadata ###
+#
+TIME    =                    * / unix time (as fractional second) of this integration (TDOUBLE)
+RA      =                    * / derived from corrected scram azza (TDOUBLE)
+DEC     =                    * / derived from corrected scram azza (TDOUBLE)
+BORSPOL =                    * / 0-37 beam/pols (TINT)
+NHITS   =                    * / (TINT)
+MISSEDPK=                    * / missed packets this beam/pol this integration (TINT)
+#
+END
+##################################################################
+# Data table columns
+#####################################################################
+#
+### ETFITS hits columns ###
+#
+TTYPE#  = 'DETPOW  '           / detected power in units of mean power
+TFORM#  = '1E      '           / 4-byte real 
+TTYPE#  = 'MEANPOW '           / mean power
+TFORM#  = '1E      '           / 4-byte real 
+TTYPE#  = 'COARCHAN'           / coarse channel bin number
+TFORM#  = '1I      '           / 16-bit integer
+TTYPE#  = 'FINECHAN'           / fine channel bin number
+TFORM#  = '1J      '           / 32-bit integer
+#
+END

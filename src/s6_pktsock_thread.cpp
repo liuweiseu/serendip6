@@ -49,9 +49,9 @@
 
 #define UNIXTIME_TO_MJD(unixtime) (((double)unixtime  / 86400.0 ) + 40587.0)
 
-#define PKTSOCK_BYTES_PER_FRAME (16384)
+#define PKTSOCK_BYTES_PER_FRAME (8192)
 #define PKTSOCK_FRAMES_PER_BLOCK (8)
-#define PKTSOCK_NBLOCKS (800)
+#define PKTSOCK_NBLOCKS (8192) //800
 #define PKTSOCK_NFRAMES (PKTSOCK_FRAMES_PER_BLOCK * PKTSOCK_NBLOCKS)
 
 // Number of mcnts per block

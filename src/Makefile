@@ -8,7 +8,7 @@ CC          = gcc
 S6_LOCATION = 
 #S6_LIB_CCFLAGS     = -g -O3 -fPIC -shared -lstdc++ -mavx -msse4 
 #S6_FAST_LIB_CCFLAGS     = -g -O3 -fPIC -shared -lstdc++ 
-S6_FAST_LIB_CCFLAGS     = -g  -fPIC -shared -lstdc++ \
+S6_FAST_LIB_CCFLAGS     = -g -fPIC -shared -lstdc++ \
 		     -I. -I$(CUDA_DIR)/include -I$(CUDA_DIR)/targets/x86_64-linux/include -I/usr/local/include -I. -I/usr/local/cfitsio/include\
 		     -L. -L/usr/local/lib -L/usr/lib64 -L/usr/local/lib/hiredis -L/usr/local/cfitsio/lib\
 		     -lhashpipe -lS6GPU -lrt -lhiredis -lcfitsio -lm -std=c++14
