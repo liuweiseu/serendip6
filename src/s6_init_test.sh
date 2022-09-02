@@ -15,8 +15,8 @@ beam=2
 
 #iface_pol0=`myinterface.sh voltpol0`
 #iface_pol1=`myinterface.sh voltpol1`
-iface_pol0="enp216s0f0"
-iface_pol1="enp216s0f1"
+iface_pol0="enp216s0f1"
+iface_pol1="enp216s0f0"
 
 # Remove old semaphore
 echo removing old semaphore, if any
@@ -42,8 +42,8 @@ instances=(
   #
   # hashpipe command line parameters (serendip6 will run as hashpipe instances 1 and 2):
   " place holder for unused instance 0.  fastburst uses instance 0"
-  "--physcpubind=7,9,11   --membind=0 ${iface_pol0} 0   8  9 11  ${beam} 0  $log_timestamp" # Instance 1
-  "--physcpubind=15,17,19 --membind=0,1 ${iface_pol1} 1  12 17 19  ${beam} 1  $log_timestamp" # Instance 2
+  "--physcpubind=16,17,18   --membind=0 ${iface_pol0} 0   16 17 18  ${beam} 0  $log_timestamp" # Instance 1
+  "--physcpubind=24,25,26 --membind=1 ${iface_pol1} 1  24 25 26  ${beam} 1  $log_timestamp" # Instance 2
 )
 
 function init() {
