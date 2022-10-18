@@ -16,6 +16,36 @@
 //#define idle_redis_error                   0x000000000000001
 //#define idle_bad_rms                       0x000000000000002 
 //#define idle_placeholder		   0x000000000000004
+/*
+typedef struct faststatus {
+
+   double   TIME;		// fractional unix time from observatory redis timestamp
+   double   DUT1;		// current UT1 - UTC difference that is being broadcast by NIST
+
+   char     RECEIVER[FASTSTATUS_STRING_SIZE];  
+
+   double   PHAPOSX;
+   double   PHAPOSY;
+   double   PHAPOSZ;
+   double   ANGLEM;
+
+   double   POINTRA[19]; 
+   double   POINTDEC[19];
+
+   double   CLOCKFRQ;
+
+   double   ADCRMS;							// ADC RMS
+   time_t   ADCRMSTM;							// ADC RMS timestamp 
+   //double   ADCRMSP0;							// polarization 0
+   //double   ADCRMSP1;							// polarization 1
+
+   int      DUMPTIME;
+   int      DUMPVOLT;
+
+   int      coarse_chan_id;                       // will always be 0 for FAST (not coarse channelized)
+} faststatus_t;
+*/
+
 
 typedef struct faststatus {
 
@@ -44,6 +74,8 @@ typedef struct faststatus {
 
    int      coarse_chan_id;                       // will always be 0 for FAST (not coarse channelized)
 } faststatus_t;
+
+
 
 int get_obs_fast_info_from_redis(faststatus_t *faststatus, char *hostname, int port);
 int put_obs_fast_info_to_redis(char * fits_filename, faststatus_t * faststatus, int instance, char *hostname, int port);
