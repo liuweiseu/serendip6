@@ -8,7 +8,7 @@
 #include <hiredis/hiredis.h>
 
 #include "hashpipe.h"
-#include "s6_obs_data_fast.h"
+#include "s6_obs_data_mro.h"
 
 //----------------------------------------------------------
 #define MAX_STRING_LENGTH 32  
@@ -74,7 +74,7 @@ static redisContext * redis_connect(char *hostname, int port) {
 }
 
 //----------------------------------------------------------
-static int s6_strcpy(char * dest, char * src, int strsize=FASTSTATUS_STRING_SIZE) {
+static int s6_strcpy(char * dest, char * src, int strsize=MROSTATUS_STRING_SIZE) {
 //----------------------------------------------------------
 
     strncpy(dest, src, strsize);
@@ -118,7 +118,7 @@ static int s6_redis_get(redisContext *c, redisReply ** reply, const char * query
 }
 
 //----------------------------------------------------------
-int put_obs_fast_info_to_redis(char * fits_filename, faststatus_t * faststatus, int instance, char *hostname, int port) {
+int put_obs_mro_info_to_redis(char * fits_filename, mrostatus_t * mrostatus, int instance, char *hostname, int port) {
 //----------------------------------------------------------
     redisContext *c;
     redisContext *c_observatory;
@@ -145,7 +145,7 @@ int put_obs_fast_info_to_redis(char * fits_filename, faststatus_t * faststatus, 
 #endif
 
     // TODO - possible race condition with FRB proccess
-    if(!rv && faststatus->DUMPVOLT) {
+    if(!rv && mrostatus->DUMPVOLT) {
         sprintf(time_str, "%ld", time(NULL));
         reply = (redisReply *)redisCommand(c,"MSET  %s %s %s", "DUMPRAW", time, "0");
         freeReplyObject(reply);
@@ -157,7 +157,7 @@ int put_obs_fast_info_to_redis(char * fits_filename, faststatus_t * faststatus, 
 }
 
 //----------------------------------------------------------
-int get_obs_fast_info_from_redis(faststatus_t * faststatus,     
+int get_obs_mro_info_from_redis(mrostatus_t * mrostatus,     
                             char    *hostname, 
                             int     port) {
 //----------------------------------------------------------
@@ -173,7 +173,7 @@ int get_obs_fast_info_from_redis(faststatus_t * faststatus,
     //int port_observatory = 8002;
     const char * host_observatory = "172.17.0.2";
     int port_observatory = 6379;
-    const char * host_pw = "fast";
+    const char * host_pw = "mro";
 
     char computehostname[32];
     char query_string[64];
@@ -207,7 +207,7 @@ int get_obs_fast_info_from_redis(faststatus_t * faststatus,
         }
         exit(1);
     }
-	rv = s6_redis_get(c_observatory, &reply,"AUTH fast");
+	//rv = s6_redis_get(c_observatory, &reply,"AUTH mro");
 #endif
 
 	gethostname(computehostname, sizeof(computehostname));
@@ -216,9 +216,9 @@ int get_obs_fast_info_from_redis(faststatus_t * faststatus,
     // ADC RMS's
 	sprintf(query_string, "HMGET       ADCRMS_%s       ADCRMSTM ADCRMSP0 ADCRMSP1", computehostname);
     if(!rv && !(rv = s6_redis_get(c, &reply, query_string))) {
-        faststatus->ADCRMSTM = atoi(reply->element[0]->str);
-        faststatus->ADCRMSP0 = atof(reply->element[1]->str);
-        faststatus->ADCRMSP1 = atof(reply->element[2]->str);
+        mrostatus->ADCRMSTM = atoi(reply->element[0]->str);
+        mrostatus->ADCRMSP0 = atof(reply->element[1]->str);
+        mrostatus->ADCRMSP1 = atof(reply->element[2]->str);
         freeReplyObject(reply);
     } 
 #endif
@@ -226,8 +226,8 @@ int get_obs_fast_info_from_redis(faststatus_t * faststatus,
 #if 0
     // Raw data dump request
     if(!rv && !(rv = s6_redis_get(c, &reply,"HMGET DUMPRAW      DUMPTIME DUMPVOLT"))) {
-        faststatus->DUMPTIME = atoi(reply->element[0]->str);
-        faststatus->DUMPVOLT = atof(reply->element[1]->str);
+        mrostatus->DUMPTIME = atoi(reply->element[0]->str);
+        mrostatus->DUMPVOLT = atof(reply->element[1]->str);
         freeReplyObject(reply);
     } 
 #endif
@@ -235,35 +235,34 @@ int get_obs_fast_info_from_redis(faststatus_t * faststatus,
 	// Get observatory data 
 	// RA and DEC gathered by name rather than a looped redis query so that all meta data is of a 
 	// single point in time
-	if(!rv) rv = s6_redis_get(c_observatory, &reply,"hmget KY_ZK_RUN_DATA_RESULT_HASH TimeStamp DUT1 Receiver SDP_PhaPos_X SDP_PhaPos_Y SDP_PhaPos_Z SDP_AngleM SDP_Beam00_RA SDP_Beam00_DEC SDP_Beam01_RA SDP_Beam01_DEC SDP_Beam02_RA SDP_Beam02_DEC SDP_Beam03_RA SDP_Beam03_DEC SDP_Beam04_RA SDP_Beam04_DEC SDP_Beam05_RA SDP_Beam05_DEC SDP_Beam06_RA SDP_Beam06_DEC SDP_Beam07_RA SDP_Beam07_DEC SDP_Beam08_RA SDP_Beam08_DEC SDP_Beam09_RA SDP_Beam09_DEC SDP_Beam10_RA SDP_Beam10_DEC SDP_Beam11_RA SDP_Beam11_DEC SDP_Beam12_RA SDP_Beam12_DEC SDP_Beam13_RA SDP_Beam13_DEC SDP_Beam14_RA SDP_Beam14_DEC SDP_Beam15_RA SDP_Beam15_DEC SDP_Beam16_RA SDP_Beam16_DEC SDP_Beam17_RA SDP_Beam17_DEC SDP_Beam18_RA SDP_Beam18_DEC");
-	if(!rv) {
-		faststatus->TIME      = atof(reply->element[0]->str)/1000.0;	// observatory gives us millisecs, we record as decimal seconds
-		faststatus->DUT1      = atof(reply->element[1]->str);
+	if(!rv) rv = s6_redis_get(c_observatory, &reply,"hmget ITA_DATA_RESULT_HASH TimeStamp DUT1 Receiver Cur_RA Cur_DEC Sys_Temp Receiver_Temp Atmo_Pressure Humidity Epoch");
+	/*
+    0: TimeStamp
+    1: Receiver
+    2: Cur_RA
+    3: Cur_DEC
+    4: Sys_Temp
+    5: Receiver_Temp
+    6: Atmo_Pressure
+    7: Humidity
+    8: Epoch
+    */
+    if(!rv) {
+		mrostatus->TIME      = atof(reply->element[0]->str)/1000.0;	// observatory gives us millisecs, we record as decimal seconds
 
-		char receiver[FASTSTATUS_STRING_SIZE];
-		strncpy(receiver, reply->element[2]->str, FASTSTATUS_STRING_SIZE);
+		strncpy(mrostatus->RECEIVER, reply->element[1]->str, MROSTATUS_STRING_SIZE);
 		// strip out any parentheses from receiver name
-		int i, j, receiver_name_length;
-		receiver_name_length = strlen(receiver);
-		for(i=0, j=0; i < receiver_name_length; i++, j++) { 
-			if(receiver[i] == '(') faststatus->RECEIVER[j] = '_'; 	// replace open paren with _
-			else if(receiver[i] == ')') j--;			// replace close paren with nothing
-			else faststatus->RECEIVER[j] = receiver[i];		// copy non-paren as is
-		}
-		faststatus->RECEIVER[j] = '\0';	
+		int receiver_name_length;
+		receiver_name_length= strlen(mrostatus->RECEIVER);
+		mrostatus->RECEIVER[receiver_name_length] = '\0';	
 
-		faststatus->PHAPOSX   = atof(reply->element[3]->str);
-		faststatus->PHAPOSY   = atof(reply->element[4]->str);
-		faststatus->PHAPOSZ   = atof(reply->element[5]->str);
-		faststatus->ANGLEM    = atof(reply->element[6]->str);
-		// so that we do not have to deal with 38 names!
-		int RAi, DECi, beam; 
-		for(RAi=7, DECi=8, beam=0; beam<19; RAi += 2, DECi += 2, beam++) {
-			faststatus->POINTRA[beam]   = atof(reply->element[RAi]->str);
-			faststatus->POINTDEC[beam]  = atof(reply->element[DECi]->str);
-//fprintf(stderr, "time %ld %f beam %d i %d ra %f dec %f\n", faststatus->TIME, faststatus->TIMEFRAC, beam, RAi, atof(reply->element[RAi]->str), atof(reply->element[DECi]->str));
-		}
-		faststatus->CLOCKFRQ = CLOCK_FREQ; 	// hard coded
+        mrostatus->POINTRA  = atof(reply->element[2]->str);
+		mrostatus->POINTDEC = atof(reply->element[3]->str);
+        mrostatus->SYS_TEMP = atof(reply->element[4]->str);
+        mrostatus->RECEIVER_TEMP = atof(reply->element[5]->str);
+        mrostatus->ATMO_PRESSURE = atof(reply->element[6]->str);
+        mrostatus->HUMIDITY = atof(reply->element[7]->str);
+        mrostatus->EPOCH    = aoof(reply->element[8]->str);
 	}
    
     if(c) redisFree(c);       // TODO do I really want to free each time?

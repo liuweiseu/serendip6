@@ -54,22 +54,19 @@ NAXIS2  =                    *  / Number of rows in table
 PCOUNT  =                    0  / size of special data area
 GCOUNT  =                    1  / one data group (required keyword)
 TFIELDS =                    *  / Number of fields per row
-EXTNAME = 'FASTSTATUS'           / name of this binary table extension
+EXTNAME = 'MROSTATUS'           / name of this binary table extension
 NMATRIX =                    1  / 1 dataset per row
 #
 COARCHID=                    *  / coarse channel ID
-CLOCKFRQ=                    *  / clock frequency - the sample rate, in MHz, of the instrument (TDOUBLE)
 TIME    =                    *  / unix time, decimal seconds
-DUT1=                        *  / current UT1 - UTC difference that is being broadcast by NIST
-
 RECEIVER=                    *		
-
-PHAPOSX =                    *
-PHAPOSY =                    *
-PHAPOSZ =                    *
-ANGLEM  =                    *
-ADCRMS =		     *
-ADCRMSTM =		     *
+SYSTEMP =                    *
+RECVTEMP=                    *
+ATMOPRES=                    *
+HUMIDITY=                    *
+EPOCH   =                    *
+ADCRMS  =		             *
+ADCRMSTM=		             *
 ### ADC RMS Values ###
 # Not yet implemented
 #

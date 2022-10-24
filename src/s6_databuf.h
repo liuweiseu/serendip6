@@ -10,7 +10,7 @@
 //#define SOURCE_FAST
 
 #define PAGE_SIZE               (4096)
-//#define CACHE_ALIGNMENT         (128)
+//#define CACHE_ALIGNMENT       (128)
 #define CACHE_ALIGNMENT         (256)
 // TODO
 // SMOOTH_SCALE, POWER_THRESH, MAXHITS, and MAXGPUHITS should be input parms
@@ -25,12 +25,12 @@
 #ifdef SOURCE_S6
 // channelized complex input
 #define N_POLS_PER_BEAM             2
-#define N_BYTES_PER_SAMPLE      	2
+#define N_BYTES_PER_SAMPLE      	  2
 #define N_BEAMS                     7
 #define N_BEAM_SLOTS                8
 #define N_COARSE_CHAN               320 
 #define N_TIME_SAMPLES              ((uint64_t)128*1024)               
-#define N_FINE_CHAN					N_TIME_SAMPLES                
+#define N_FINE_CHAN					        N_TIME_SAMPLES                
 #define N_SPECTRA_PER_PACKET        1
 #define N_SUBSPECTRA_PER_SPECTRUM   1
 #define N_SAMPLES_PER_BLOCK         (N_FINE_CHAN * N_COARSE_CHAN * N_POLS_PER_BEAM * N_BEAM_SLOTS)
@@ -38,19 +38,19 @@
 #define N_SOURCE_NODES              (N_BEAMS)
 #define N_COARSE_CHAN_PER_BORS      (N_COARSE_CHAN)
 #define SMOOTH_SCALE                1024
-#define N_INPUT_BLOCKS          3
-#define N_DEBUG_INPUT_BLOCKS    0
-#define N_OUTPUT_BLOCKS         3
+#define N_INPUT_BLOCKS              3
+#define N_DEBUG_INPUT_BLOCKS        0
+#define N_OUTPUT_BLOCKS             3
 
 #elif SOURCE_DIBAS
 // channelized complex input
 #define N_POLS_PER_BEAM             2
-#define N_BYTES_PER_SAMPLE      	2
+#define N_BYTES_PER_SAMPLE          2
 #define N_BEAMS                     1
 #define N_BEAM_SLOTS                1
 #define N_COARSE_CHAN               512 
 #define N_TIME_SAMPLES              ((uint64_t) 512*1024)               
-#define N_FINE_CHAN 				N_TIME_SAMPLES               
+#define N_FINE_CHAN 		            N_TIME_SAMPLES               
 #define N_SPECTRA_PER_PACKET        4
 #define N_SUBSPECTRA_PER_SPECTRUM   8
 #define N_SAMPLES_PER_BLOCK         (N_FINE_CHAN * N_COARSE_CHAN * N_POLS_PER_BEAM)
@@ -58,23 +58,23 @@
 #define N_SOURCE_NODES              8
 #define N_COARSE_CHAN_PER_BORS      (N_COARSE_CHAN/N_BORS)
 #define SMOOTH_SCALE                1024
-#define N_INPUT_BLOCKS          3
-#define N_DEBUG_INPUT_BLOCKS    0
-#define N_OUTPUT_BLOCKS         3
+#define N_INPUT_BLOCKS              3
+#define N_DEBUG_INPUT_BLOCKS        0
+#define N_OUTPUT_BLOCKS             3
 
 #elif SOURCE_FAST
 // non-channelized real input
 #define N_POLS_PER_BEAM             1
 #define N_POLS_PER_BEAM_TOTAL       2
-#define N_BYTES_PER_SAMPLE      	  1
+#define N_BYTES_PER_SAMPLE          1
 #define N_BEAMS                     19
 #define N_BEAM_SLOTS                1
 #define N_COARSE_CHAN               1
 //#define N_TIME_SAMPLES            ((uint64_t) 512*1024*1024)               
 #define N_TIME_SAMPLES              ((uint64_t) 1024*1024*1024)               
 //#define N_TIME_SAMPLES            ((uint64_t) 1024*1024)               
-#define N_FINE_CHAN 				        (N_TIME_SAMPLES/2)                
-//#define N_FINE_CHAN 				      (N_TIME_SAMPLES/2 + 1)                
+#define N_FINE_CHAN 		            (N_TIME_SAMPLES/2)                
+//#define N_FINE_CHAN 		    (N_TIME_SAMPLES/2 + 1)                
 #define N_SPECTRA_PER_PACKET        4096
 #define N_SUBSPECTRA_PER_SPECTRUM   1
 #define N_SAMPLES_PER_BLOCK         (N_TIME_SAMPLES * N_COARSE_CHAN * N_POLS_PER_BEAM)
@@ -82,35 +82,60 @@
 #define N_SOURCE_NODES              (N_BEAMS * N_POLS_PER_BEAM_TOTAL)
 #define N_COARSE_CHAN_PER_BORS      (N_COARSE_CHAN/N_BORS)
 #define SMOOTH_SCALE                (8*1024)
-#define N_INPUT_BLOCKS          24
-#define N_DEBUG_INPUT_BLOCKS    0
-#define N_OUTPUT_BLOCKS         3
+#define N_INPUT_BLOCKS              8
+#define N_DEBUG_INPUT_BLOCKS        0
+#define N_OUTPUT_BLOCKS             4
 // for FAST, the clock frequency is hard set to 1GHz, expressed here in MHz
-#define CLOCK_FREQ		1000.0
-#define RMS_LENGTH		1000
-#define RMS_THRESH		3.0
-#define ACQUIRE_METADATA	1
+#define CLOCK_FREQ		              1000.0
+#define RMS_LENGTH		              1000
+#define RMS_THRESH		              3.0
+#define ACQUIRE_METADATA	          1
+#elif SOURCE_MRO
+// non-channelized real input
+#define N_POLS_PER_BEAM             1
+#define N_POLS_PER_BEAM_TOTAL       2
+#define N_BYTES_PER_SAMPLE          1
+#define N_BEAMS                     19
+#define N_BEAM_SLOTS                1
+#define N_COARSE_CHAN               1           
+#define N_TIME_SAMPLES              ((uint64_t) 1024*1024*1024)                            
+#define N_FINE_CHAN 		            (N_TIME_SAMPLES/2)                            
+#define N_SPECTRA_PER_PACKET        4096
+#define N_SUBSPECTRA_PER_SPECTRUM   1
+#define N_SAMPLES_PER_BLOCK         (N_TIME_SAMPLES * N_COARSE_CHAN * N_POLS_PER_BEAM)
+#define N_BORS                      (N_SUBSPECTRA_PER_SPECTRUM)
+#define N_SOURCE_NODES              (N_BEAMS * N_POLS_PER_BEAM_TOTAL)
+#define N_COARSE_CHAN_PER_BORS      (N_COARSE_CHAN/N_BORS)
+#define SMOOTH_SCALE                (8*1024)
+#define N_INPUT_BLOCKS              8
+#define N_DEBUG_INPUT_BLOCKS        0
+#define N_OUTPUT_BLOCKS             4
+// for MRO, the clock frequency is hard set to 1GHz, expressed here in MHz
+#define CLOCK_FREQ		              1000.0
+#define RMS_LENGTH		              1000
+#define RMS_THRESH		              3.0
+#define ACQUIRE_METADATA	          1
 #endif
 
 //#define N_COARSE_CHAN_PER_SUBSPECTRUM   (N_COARSE_CHAN / N_SUBSPECTRA_PER_SPECTRUM) 
 //#define N_BYTES_PER_SUBSPECTRUM         (N_COARSE_CHAN_PER_SUBSPECTRUM * N_BYTES_PER_SAMPLE * N_POLS_PER_BEAM)
 
-#define N_SAMPLES_PER_BEAM      (N_FINE_CHAN * N_COARSE_CHAN * N_POLS_PER_BEAM)
-#define N_BYTES_PER_BEAM        (N_BYTES_PER_SAMPLE * N_SAMPLES_PER_BEAM)
-#define N_BYTES_PER_SUBSPECTRUM (N_BYTES_PER_SAMPLE * N_COARSE_CHAN / N_SUBSPECTRA_PER_SPECTRUM * N_POLS_PER_BEAM)
-#define N_DATA_BYTES_PER_BLOCK  (N_BYTES_PER_SAMPLE * N_SAMPLES_PER_BLOCK)
+#define N_SAMPLES_PER_BEAM          (N_FINE_CHAN * N_COARSE_CHAN * N_POLS_PER_BEAM)
+#define N_BYTES_PER_BEAM            (N_BYTES_PER_SAMPLE * N_SAMPLES_PER_BEAM)
+#define N_BYTES_PER_SUBSPECTRUM     (N_BYTES_PER_SAMPLE * N_COARSE_CHAN / N_SUBSPECTRA_PER_SPECTRUM * N_POLS_PER_BEAM)
+#define N_DATA_BYTES_PER_BLOCK      (N_BYTES_PER_SAMPLE * N_SAMPLES_PER_BLOCK)
 
-#define POWER_THRESH            20.0
-#define MIN_POWER_THRESH        10.0
-#define MAXGPUHITS              ((int)(1.0 / MIN_POWER_THRESH * N_FINE_CHAN))    
-#define MAXHITS                 4096
+#define POWER_THRESH                20.0
+#define MIN_POWER_THRESH            10.0
+#define MAXGPUHITS                  ((int)(1.0 / MIN_POWER_THRESH * N_FINE_CHAN))    
+#define MAXHITS                     4096
 
 // The following 3 #define's are needed only by s6_gen_fake_data.
 // Perhaps they should be removed at some point (with a change to
 // s6_gen_fake_data).
-#define N_SUBBANDS              1
-#define N_SUBBAND_CHAN          (N_COARSE_CHAN / N_SUBBANDS)
-//#define N_GPU_ELEMENTS          (N_FINE_CHAN * N_COARSE_CHAN_PER_BORS)
+#define N_SUBBANDS                  1
+#define N_SUBBAND_CHAN              (N_COARSE_CHAN / N_SUBBANDS)
+//#define N_GPU_ELEMENTS            (N_FINE_CHAN * N_COARSE_CHAN_PER_BORS)
 
 // Used to pad after hashpipe_databuf_t to maintain cache alignment
 typedef uint8_t hashpipe_databuf_cache_alignment[

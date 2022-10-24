@@ -630,6 +630,43 @@ int write_integration_header_fast(etfits_t * etf, faststatus_t *faststatus_p) {
 }
 #endif
 
+//----------------------------------------------------------
+int write_integration_header_mro(etfits_t * etf, mrostatus_t *mrostatus_p) {
+//----------------------------------------------------------
+
+    int * status_p = &(etf->status);
+    *status_p = 0;
+
+    if(etf->integration_cnt == 0) {
+        // go to the template created HDU
+        if(! *status_p) fits_movnam_hdu(etf->fptr, BINARY_TBL, (char *)"MROSTATUS", 0, status_p);
+    } else {
+        // create new HDU
+        if(! *status_p) fits_create_tbl(etf->fptr, BINARY_TBL, 0, 0, NULL, NULL, NULL, (char *)"FASTSTATUS", status_p);
+    }
+
+    if(! *status_p) fits_update_key(etf->fptr, TSTRING, "EXTNAME",  (char *)"MROSTATUS",  NULL, status_p); 
+    if(! *status_p) fits_update_key(etf->fptr, TINT,    "COARCHID", &mrostatus_p->coarse_chan_id,   NULL, status_p);
+
+    if(! *status_p) fits_update_key(etf->fptr, TDOUBLE, "TIME",     &mrostatus_p->TIME,   NULL, status_p); 
+    if(! *status_p) fits_update_key(etf->fptr, TSTRING, "RECEIVER", &(mrostatus_p->RECEIVER), NULL, status_p); 
+    if(! *status_p) fits_update_key(etf->fptr, TDOUBLE, "SYSTEMP", &(mrostatus_p->ADCRMS), NULL, status_p);
+    if(! *status_p) fits_update_key(etf->fptr, TDOUBLE, "RECVTEMP", &(mrostatus_p->RECEIVER_TEMP), NULL, status_p);
+    if(! *status_p) fits_update_key(etf->fptr, TDOUBLE, "ATMOPRES", &(mrostatus_p->ATMO_PRESSURE), NULL, status_p);
+    if(! *status_p) fits_update_key(etf->fptr, TDOUBLE, "HUMIDITY", &(mrostatus_p->HUMIDITY), NULL, status_p);
+    if(! *status_p) fits_update_key(etf->fptr, TDOUBLE, "EPOCH", &(mrostatus_p->EPOCH), NULL, status_p);
+    
+    if(! *status_p) fits_update_key(etf->fptr, TDOUBLE, "ADCRMS", &(mrostatus_p->ADCRMS), NULL, status_p);
+    if(! *status_p) fits_update_key(etf->fptr, TINT,    "ADCRMSTM", &(mrostatus_p->ADCRMSTM), NULL, status_p);
+
+    if (*status_p) {
+        hashpipe_error(__FUNCTION__, "Error writing integration header");
+        //fprintf(stderr, "Error writing integration header.\n");
+        fits_report_error(stderr, *status_p);
+    }
+
+    return *status_p;
+}
 
 //----------------------------------------------------------
 int write_integration_header(etfits_t * etf, scram_t *scram) {
