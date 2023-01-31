@@ -46,13 +46,13 @@ typedef struct mrostatus {
    double   ELER;                               // el error
    double   RAA;                                // ra in hour
    double   DEA;                                // dec in decimal
-   int      ONSOURCE;                           // 1 = on source; 0 = offsource
+   long     ONSOURCE;                           // 1 = on source; 0 = offsource
    char     SITE[MROSTATUS_STRING_SIZE];        // site = "Mc"
    char     RX_CODE[MROSTATUS_STRING_SIZE];     // receiver in use= sxp, xxp, llp, kkc,  etc…   (p=primary focus, C=cassegrain)
    char     YEAR_DOY_UTC[MROSTATUS_STRING_SIZE];// utc year?
-   int      YEAR;                               // year
-   int      DOY_UTC;                            // day of year
-   int      UTC;                                // utc
+   long     YEAR;                               // year
+   long     DOY_UTC;                            // day of year
+   long     UTC;                                // utc
    double   LO_FREQ;                            // lo frequency
    double   TSYS;                               // system temp ??
    double   XC;                                 // xc
@@ -65,9 +65,9 @@ typedef struct mrostatus {
    double   Z1A;                                // z1a
    double   Z2A;                                // z2a
    double   Z3A;                                // z3a
-   int      SUBMODE;                            // submode = 0
+   long     SUBMODE;                            // submode = 0
    char     RX_SUB[MROSTATUS_STRING_SIZE];      // rx sub
-   int      SCU_STATUS;                         // scu status 
+   long     SCU_STATUS;                         // scu status 
 } mrostatus_t;
 
 

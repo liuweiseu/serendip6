@@ -212,114 +212,47 @@ int get_obs_mro_info_from_redis(mrostatus_t * mrostatus,
 
 	gethostname(computehostname, sizeof(computehostname));
 
-#if 0
-    // ADC RMS's
-	sprintf(query_string, "HMGET       ADCRMS_%s       ADCRMSTM ADCRMSP0 ADCRMSP1", computehostname);
-    if(!rv && !(rv = s6_redis_get(c, &reply, query_string))) {
-        mrostatus->ADCRMSTM = atoi(reply->element[0]->str);
-        mrostatus->ADCRMSP0 = atof(reply->element[1]->str);
-        mrostatus->ADCRMSP1 = atof(reply->element[2]->str);
-        freeReplyObject(reply);
-    } 
-#endif
-
-#if 0
-    // Raw data dump request
-    if(!rv && !(rv = s6_redis_get(c, &reply,"HMGET DUMPRAW      DUMPTIME DUMPVOLT"))) {
-        mrostatus->DUMPTIME = atoi(reply->element[0]->str);
-        mrostatus->DUMPVOLT = atof(reply->element[1]->str);
-        freeReplyObject(reply);
-    } 
-#endif
-
 	// Get observatory data 
 	// RA and DEC gathered by name rather than a looped redis query so that all meta data is of a 
 	// single point in time
-	if(!rv) rv = s6_redis_get(c_observatory, &reply,"hmget ITA_DATA_RESULT_HASH \
-                                                    TimeStamp       \
-                                                    DUT1            \
-                                                    Receiver        \
-                                                    Teor_RA         \
-                                                    Teor_DEC        \
-                                                    Apparent_RA     \
-                                                    Apparent_DEC    \
-                                                    Cur_RA          \
-                                                    Cur_DEC         \
-                                                    RA_Rate         \
-                                                    DEC_Rate        \
-                                                    Sys_Temp        \
-                                                    RA_Offset       \
-                                                    DEC_Offset      \
-                                                    Commanded_Az    \
-                                                    Commanded_El    \
-                                                    Actual_Az       \
-                                                    Actual_El       \
-                                                    Az_Error        \
-                                                    El_Error        \
-                                                    Az_Rate         \
-                                                    El_Rate         \
-                                                    Sky_Error       \
-                                                    Cys_Sec         \
-                                                    Receiver_Temp   \
-                                                    Atmo_Pressure   \
-                                                    Humidity        \
-                                                    Receiver_Vac    \
-                                                    Epoch");
-	/*
-    00: TimeStamp       
-    01: DUT1            
-    02: Receiver        
-    03: Teor_RA         
-    04: Teor_DEC        
-    05: Apparent_RA     
-    06: Apparent_DEC    
-    07: Cur_RA          
-    08: Cur_DEC         
-    09: RA_Rate         
-    10: DEC_Rate        
-    11: Sys_Temp        
-    12: RA_Offset       
-    13: DEC_Offset      
-    14: Commanded_Az    
-    15: Commanded_El    
-    16: Actual_Az       
-    17: Actual_El       
-    18: Az_Error        
-    19: El_Error        
-    20: Az_Rate         
-    21: El_Rate         
-    22: Sky_Error       
-    23: Cys_Sec         
-    24: Receiver_Temp   
-    25: Atmo_Pressure   
-    26: Humidity        
-    27: Receiver_Vac    
-    28: Epoch
-    */
-    if(!rv) {
-		mrostatus->ADCRMS   = 0;
-        mrostatus->ADCRMSTM = 0;
-        mrostatus->DUMPVOLT = 0;
-        mrostatus->DUMPTIME = 0;
-        mrostatus->coarse_chan_id = 0;
+	if(!rv && !(rv = s6_redis_get(c,&reply,"get source")))  {s6_strcpy(mrostatus->SOURCE,reply->element[0]->str);       freeReplyObject(reply);}
+    if(!rv && !(rv = s6_redis_get(c,&reply,"get sra")))     {s6_strcpy(mrostatus->SRA,reply->element[0]->str);          freeReplyObject(reply);}
+    if(!rv && !(rv = s6_redis_get(c,&reply,"get sdec")))    {s6_strcpy(mrostatus->SDEC,reply->element[0]->str);         freeReplyObject(reply);}
+    if(!rv && !(rv = s6_redis_get(c,&reply,"get rac")))     {s6_strcpy(mrostatus->RAC,reply->element[0]->str);          freeReplyObject(reply);}
+    if(!rv && !(rv = s6_redis_get(c,&reply,"get dec")))     {s6_strcpy(mrostatus->DEC,reply->element[0]->str);          freeReplyObject(reply);}
+    if(!rv && !(rv = s6_redis_get(c,&reply,"get raer")))    {s6_strcpy(mrostatus->RAER,reply->element[0]->str);         freeReplyObject(reply);}
+    if(!rv && !(rv = s6_redis_get(c,&reply,"get decer")))   {s6_strcpy(mrostatus->DECER,reply->element[0]->str);        freeReplyObject(reply);}
+    if(!rv && !(rv = s6_redis_get(c,&reply,"get azc")))     {mrostatus->AZC = atof(reply->element[0]->str);             freeReplyObject(reply);}
+    if(!rv && !(rv = s6_redis_get(c,&reply,"get elc")))     {mrostatus->ELC = atof(reply->element[0]->str);             freeReplyObject(reply);}
+    if(!rv && !(rv = s6_redis_get(c,&reply,"get aza")))     {mrostatus->AZA = atof(reply->element[0]->str);             freeReplyObject(reply);}
+    if(!rv && !(rv = s6_redis_get(c,&reply,"get ela")))     {mrostatus->ELA = atof(reply->element[0]->str);             freeReplyObject(reply);}
+    if(!rv && !(rv = s6_redis_get(c,&reply,"get azer")))    {mrostatus->AZER= atof(reply->element[0]->str);             freeReplyObject(reply);}
+    if(!rv && !(rv = s6_redis_get(c,&reply,"get eler")))    {mrostatus->ELER= atof(reply->element[0]->str);             freeReplyObject(reply);}
+    if(!rv && !(rv = s6_redis_get(c,&reply,"get raa")))     {mrostatus->RAA = atof(reply->element[0]->str);             freeReplyObject(reply);}
+    if(!rv && !(rv = s6_redis_get(c,&reply,"get dea")))     {mrostatus->DEA = atof(reply->element[0]->str);             freeReplyObject(reply);}
+    if(!rv && !(rv = s6_redis_get(c,&reply,"get onsource")))  {mrostatus->ONSOURCE = atol(reply->element[0]->str);      freeReplyObject(reply);}
+    if(!rv && !(rv = s6_redis_get(c,&reply,"get site")))    {s6_strcpy(mrostatus->SITE,reply->element[0]->str);         freeReplyObject(reply);}
+    if(!rv && !(rv = s6_redis_get(c,&reply,"get rx_code"))) {s6_strcpy(mrostatus->RX_CODE,reply->element[0]->str);      freeReplyObject(reply);}
+    if(!rv && !(rv = s6_redis_get(c,&reply,"get year_doy_UTC")))  {s6_strcpy(mrostatus->YEAR_DOY_UTC,reply->element[0]->str);     freeReplyObject(reply);}
+    if(!rv && !(rv = s6_redis_get(c,&reply,"get year")))    {mrostatus->YEAR = atol(reply->element[0]->str);            freeReplyObject(reply);}
+    if(!rv && !(rv = s6_redis_get(c,&reply,"get doy_UTC"))) {mrostatus->DOY_UTC = atol(reply->element[0]->str);         freeReplyObject(reply);}
+    if(!rv && !(rv = s6_redis_get(c,&reply,"get UTC")))     {mrostatus->UTC = atol(reply->element[0]->str);             freeReplyObject(reply);}
+    if(!rv && !(rv = s6_redis_get(c,&reply,"get lo_freq"))) {mrostatus->LO_FREQ = atof(reply->element[0]->str);         freeReplyObject(reply);}
+    if(!rv && !(rv = s6_redis_get(c,&reply,"get tsys")))    {mrostatus->TSYS = atof(reply->element[0]->str);            freeReplyObject(reply);}
+    if(!rv && !(rv = s6_redis_get(c,&reply,"get xc")))      {mrostatus->XC = atof(reply->element[0]->str);              freeReplyObject(reply);}
+    if(!rv && !(rv = s6_redis_get(c,&reply,"get yc")))      {mrostatus->YC = atof(reply->element[0]->str);              freeReplyObject(reply);}
+    if(!rv && !(rv = s6_redis_get(c,&reply,"get z1c")))     {mrostatus->Z1C = atof(reply->element[0]->str);             freeReplyObject(reply);}
+    if(!rv && !(rv = s6_redis_get(c,&reply,"get z2c")))     {mrostatus->Z2C = atof(reply->element[0]->str);             freeReplyObject(reply);}
+    if(!rv && !(rv = s6_redis_get(c,&reply,"get z3c")))     {mrostatus->Z3C = atof(reply->element[0]->str);             freeReplyObject(reply);}
+    if(!rv && !(rv = s6_redis_get(c,&reply,"get xa")))      {mrostatus->XA = atof(reply->element[0]->str);              freeReplyObject(reply);}
+    if(!rv && !(rv = s6_redis_get(c,&reply,"get ya")))      {mrostatus->YA = atof(reply->element[0]->str);              freeReplyObject(reply);}
+    if(!rv && !(rv = s6_redis_get(c,&reply,"get z1a")))     {mrostatus->Z1A = atof(reply->element[0]->str);             freeReplyObject(reply);}
+    if(!rv && !(rv = s6_redis_get(c,&reply,"get z2a")))     {mrostatus->Z2A = atof(reply->element[0]->str);             freeReplyObject(reply);}
+    if(!rv && !(rv = s6_redis_get(c,&reply,"get z3a")))     {mrostatus->Z3A = atof(reply->element[0]->str);             freeReplyObject(reply);}
+    if(!rv && !(rv = s6_redis_get(c,&reply,"get submode"))) {mrostatus->SUBMODE = atol(reply->element[0]->str);         freeReplyObject(reply);}
+    if(!rv && !(rv = s6_redis_get(c,&reply,"get rx_sub")))  {s6_strcpy(mrostatus->RX_SUB,reply->element[0]->str);       freeReplyObject(reply);}
+    if(!rv && !(rv = s6_redis_get(c,&reply,"get scu_status"))) {mrostatus->SCU_STATUS=atol(reply->element[0]->str);     freeReplyObject(reply);}
 
-        mrostatus->TIME      = atof(reply->element[0]->str)/1000.0;	// observatory gives us millisecs, we record as decimal seconds
-
-        // strip out any parentheses from receiver name
-		strncpy(mrostatus->RECEIVER, reply->element[2]->str, MROSTATUS_STRING_SIZE);
-		int receiver_name_length;
-		receiver_name_length= strlen(mrostatus->RECEIVER);
-		mrostatus->RECEIVER[receiver_name_length] = '\0';	
-
-        mrostatus->POINTRA  = atof(reply->element[7]->str);
-		mrostatus->POINTDEC = atof(reply->element[8]->str);
-        mrostatus->SYS_TEMP = atof(reply->element[4]->str);
-        mrostatus->RECEIVER_TEMP = atof(reply->element[5]->str);
-        mrostatus->ATMO_PRESSURE = atof(reply->element[6]->str);
-        mrostatus->HUMIDITY = atof(reply->element[7]->str);
-        mrostatus->EPOCH    = aoof(reply->element[8]->str);
-	}
-   
     if(c) redisFree(c);       // TODO do I really want to free each time?
     if(c_observatory) redisFree(c_observatory);       // TODO do I really want to free each time?
 
