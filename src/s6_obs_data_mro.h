@@ -24,31 +24,50 @@ typedef struct mrostatus {
 
    char     RECEIVER[MROSTATUS_STRING_SIZE];  
 
-   double   POINTRA; 
-   double   POINTDEC;
-   
-   /*
-   double   PHAPOSX;
-   double   PHAPOSY;
-   double   PHAPOSZ;
-   double   ANGLEM;
-   */
-   
-   //double   CLOCKFRQ;
-
    double   ADCRMS;							// ADC RMS
    time_t   ADCRMSTM;						// ADC RMS timestamp 
-   
    int      DUMPTIME;
    int      DUMPVOLT;
 
    int      coarse_chan_id;                       // will always be 0 for MRO (not coarse channelized)
-
-   double   SYS_TEMP;
-   double   RECEIVER_TEMP;
-   double   ATMO_PRESSURE;
-   double   HUMIDITY;
-   double   EPOCH;
+   
+   char     SOURCE[MROSTATUS_STRING_SIZE];      // source name
+   char     SRA[MROSTATUS_STRING_SIZE];         // source ra
+   char     SDEC[MROSTATUS_STRING_SIZE];        // source dec
+   char     RAC[MROSTATUS_STRING_SIZE];         // ra commanded
+   char     DEC[MROSTATUS_STRING_SIZE];         // dec commanded
+   char     RAER[MROSTATUS_STRING_SIZE];        // ra error
+   char     DECER[MROSTATUS_STRING_SIZE];       // dec error
+   double   AZC;                                // az commanded
+   double   ELC;                                // el commanded
+   double   AZA;                                // az actual
+   double   ELA;                                // el actual
+   double   AZER;                               // az error
+   double   ELER;                               // el error
+   double   RAA;                                // ra in hour
+   double   DEA;                                // dec in decimal
+   int      ONSOURCE;                           // 1 = on source; 0 = offsource
+   char     SITE[MROSTATUS_STRING_SIZE];        // site = "Mc"
+   char     RX_CODE[MROSTATUS_STRING_SIZE];     // receiver in use= sxp, xxp, llp, kkc,  etc…   (p=primary focus, C=cassegrain)
+   char     YEAR_DOY_UTC[MROSTATUS_STRING_SIZE];// utc year?
+   int      YEAR;                               // year
+   int      DOY_UTC;                            // day of year
+   int      UTC;                                // utc
+   double   LO_FREQ;                            // lo frequency
+   double   TSYS;                               // system temp ??
+   double   XC;                                 // xc
+   double   YC;                                 // yc
+   double   Z1C;                                // z1c
+   double   Z2C;                                // z2c
+   double   Z3C;                                // z3c
+   double   XA;                                 // xa
+   double   YA;                                 // ya
+   double   Z1A;                                // z1a
+   double   Z2A;                                // z2a
+   double   Z3A;                                // z3a
+   int      SUBMODE;                            // submode = 0
+   char     RX_SUB[MROSTATUS_STRING_SIZE];      // rx sub
+   int      SCU_STATUS;                         // scu status 
 } mrostatus_t;
 
 

@@ -201,7 +201,7 @@ int get_obs_mro_info_from_redis(mrostatus_t * mrostatus,
     if (c == NULL || c->err) {
         if (c) {
             hashpipe_error(__FUNCTION__, c->errstr);
-            redisFree(c);
+            redisFree(c);37824118
         } else {
             hashpipe_error(__FUNCTION__, "Connection error: can't allocate redis context");
         }
@@ -235,29 +235,84 @@ int get_obs_mro_info_from_redis(mrostatus_t * mrostatus,
 	// Get observatory data 
 	// RA and DEC gathered by name rather than a looped redis query so that all meta data is of a 
 	// single point in time
-	if(!rv) rv = s6_redis_get(c_observatory, &reply,"hmget ITA_DATA_RESULT_HASH TimeStamp DUT1 Receiver Cur_RA Cur_DEC Sys_Temp Receiver_Temp Atmo_Pressure Humidity Epoch");
+	if(!rv) rv = s6_redis_get(c_observatory, &reply,"hmget ITA_DATA_RESULT_HASH \
+                                                    TimeStamp       \
+                                                    DUT1            \
+                                                    Receiver        \
+                                                    Teor_RA         \
+                                                    Teor_DEC        \
+                                                    Apparent_RA     \
+                                                    Apparent_DEC    \
+                                                    Cur_RA          \
+                                                    Cur_DEC         \
+                                                    RA_Rate         \
+                                                    DEC_Rate        \
+                                                    Sys_Temp        \
+                                                    RA_Offset       \
+                                                    DEC_Offset      \
+                                                    Commanded_Az    \
+                                                    Commanded_El    \
+                                                    Actual_Az       \
+                                                    Actual_El       \
+                                                    Az_Error        \
+                                                    El_Error        \
+                                                    Az_Rate         \
+                                                    El_Rate         \
+                                                    Sky_Error       \
+                                                    Cys_Sec         \
+                                                    Receiver_Temp   \
+                                                    Atmo_Pressure   \
+                                                    Humidity        \
+                                                    Receiver_Vac    \
+                                                    Epoch");
 	/*
-    0: TimeStamp
-    1: Receiver
-    2: Cur_RA
-    3: Cur_DEC
-    4: Sys_Temp
-    5: Receiver_Temp
-    6: Atmo_Pressure
-    7: Humidity
-    8: Epoch
+    00: TimeStamp       
+    01: DUT1            
+    02: Receiver        
+    03: Teor_RA         
+    04: Teor_DEC        
+    05: Apparent_RA     
+    06: Apparent_DEC    
+    07: Cur_RA          
+    08: Cur_DEC         
+    09: RA_Rate         
+    10: DEC_Rate        
+    11: Sys_Temp        
+    12: RA_Offset       
+    13: DEC_Offset      
+    14: Commanded_Az    
+    15: Commanded_El    
+    16: Actual_Az       
+    17: Actual_El       
+    18: Az_Error        
+    19: El_Error        
+    20: Az_Rate         
+    21: El_Rate         
+    22: Sky_Error       
+    23: Cys_Sec         
+    24: Receiver_Temp   
+    25: Atmo_Pressure   
+    26: Humidity        
+    27: Receiver_Vac    
+    28: Epoch
     */
     if(!rv) {
-		mrostatus->TIME      = atof(reply->element[0]->str)/1000.0;	// observatory gives us millisecs, we record as decimal seconds
+		mrostatus->ADCRMS   = 0;
+        mrostatus->ADCRMSTM = 0;
+        mrostatus->DUMPVOLT = 0;
+        mrostatus->DUMPTIME = 0;
+        mrostatus->coarse_chan_id = 0;
 
-		strncpy(mrostatus->RECEIVER, reply->element[1]->str, MROSTATUS_STRING_SIZE);
-		// strip out any parentheses from receiver name
+        mrostatus->TIME      = atof(reply->element[0]->str)/1000.0;	// observatory gives us millisecs, we record as decimal seconds
+
+        // strip out any parentheses from receiver name
+		strncpy(mrostatus->RECEIVER, reply->element[2]->str, MROSTATUS_STRING_SIZE);
 		int receiver_name_length;
 		receiver_name_length= strlen(mrostatus->RECEIVER);
 		mrostatus->RECEIVER[receiver_name_length] = '\0';	
 
-        mrostatus->POINTRA  = atof(reply->element[2]->str);
-		mrostatus->POINTDEC = atof(reply->element[3]->str);
+        mrostatus->POINTRA  = atof(reply->element[7]->str);
+		mrostatus->POINTDEC = atof(reply->element[8]->str);
         mrostatus->SYS_TEMP = atof(reply->element[4]->str);
         mrostatus->RECEIVER_TEMP = atof(reply->element[5]->str);
         mrostatus->ATMO_PRESSURE = atof(reply->element[6]->str);
