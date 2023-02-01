@@ -6,7 +6,7 @@
 #include "hashpipe_databuf.h"
 //#include "config.h"
 //#include "s6GPU.h"
-
+#define SOURCE_MRO
 //#define SOURCE_FAST
 
 #define PAGE_SIZE               (4096)
@@ -90,12 +90,13 @@
 #define RMS_LENGTH		              1000
 #define RMS_THRESH		              3.0
 #define ACQUIRE_METADATA	          1
+
 #elif SOURCE_MRO
 // non-channelized real input
 #define N_POLS_PER_BEAM             1
 #define N_POLS_PER_BEAM_TOTAL       2
 #define N_BYTES_PER_SAMPLE          1
-#define N_BEAMS                     19
+#define N_BEAMS                     1
 #define N_BEAM_SLOTS                1
 #define N_COARSE_CHAN               1           
 #define N_TIME_SAMPLES              ((uint64_t) 1024*1024*1024)                            

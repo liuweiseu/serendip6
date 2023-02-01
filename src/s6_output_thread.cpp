@@ -65,6 +65,11 @@ static void *run(hashpipe_thread_args_t * args)
     faststatus_t * faststatus_p = &faststatus;
     char *prior_receiver = (char *)malloc(32);
     strcpy(prior_receiver,"");
+#elif SOURCE_MRO
+    mrostatus_t mrostatus;
+    mrostatus_t * mrostatus_p = &mrostatus;
+    char *prior_receiver = (char *)malloc(32);
+    strcpy(prior_receiver,"");
 #endif    
 
     int run_always, prior_run_always=0;                 // 1 = run even if no receiver
@@ -162,8 +167,10 @@ static void *run(hashpipe_thread_args_t * args)
 #elif SOURCE_DIBAS
             rv = get_obs_gbt_info_from_redis(gbtstatus_p,   (char *)REDISHOST, 6379);
 #elif SOURCE_FAST
-            //rv = get_obs_fast_info_from_redis(faststatus_p, (char *)REDISHOST, 6379);
+            rv = get_obs_fast_info_from_redis(faststatus_p, (char *)REDISHOST, 6379);
             hputi4(st.buf, "DUMPVOLT", faststatus.DUMPVOLT);  // raw data dump request status
+#elif SOURCE_MRO
+            rv = get_obs_mro_info_from_redis(mrostatus_p, (char *)REDISHOST, 6379);
 #endif
         } else {
 #ifdef SOURCE_S6
@@ -175,7 +182,9 @@ static void *run(hashpipe_thread_args_t * args)
 #elif SOURCE_FAST
             memset((void *)faststatus_p, 0, sizeof(faststatus_t));  // test mode - zero entire gbtstatus
 			strcpy(faststatus.RECEIVER, "S6TEST");					// 	   and RECEIVER (which indicates
-																	//     test mode for downstream processes
+#elif SOURCE_MRO
+            memset((void *)mrostatus_p, 0, sizeof(mrostatus_t));  // test mode - zero entire gbtstatus
+			strcpy(faststatus.RX_CODE, "S6TEST");					// 	   and RECEIVER (which indicates																//     test mode for downstream processes
 #endif
         }
 
@@ -222,6 +231,9 @@ static void *run(hashpipe_thread_args_t * args)
             }
         }
 #endif
+#ifdef SOURCE_MRO
+        // TODO: add code for MRO receiver check
+#endif
 //fprintf(stderr, "flag 0x%08x idle %d\n", idle_flag, idle);
         if(idle_flag) {
             if(!idle) {    // if not already idling
@@ -244,6 +256,8 @@ static void *run(hashpipe_thread_args_t * args)
         gbtstatus.coarse_chan_id = db->block[block_idx].header.coarse_chan_id;
 #elif SOURCE_FAST
         faststatus.coarse_chan_id = 0;
+#elif SOURCE_MRO
+        mrostatus.coarse_chan_id = 0;
 #endif
         hashpipe_status_lock_safe(&st);
 #ifdef SOURCE_S6
@@ -305,6 +319,8 @@ static void *run(hashpipe_thread_args_t * args)
                gbtstatus.WEBCNTRL == 0                        ||
 #elif SOURCE_FAST
             if(strcmp(faststatus.RECEIVER,prior_receiver) != 0 ||
+#elif SOURCE_MRO
+            if(strcmp(mrostatus.RX_CODE,prior_receiver) != 0 ||
 #endif
                run_always      != prior_run_always            ||
                num_coarse_chan != db->block[block_idx].header.num_coarse_chan) {
@@ -317,6 +333,8 @@ static void *run(hashpipe_thread_args_t * args)
                               num_coarse_chan, gbtstatus.IFV1TNCI);
 #elif SOURCE_FAST
                               num_coarse_chan, faststatus.RECEIVER);
+#elif SOURCE_MRO
+                              num_coarse_chan, mrostatus.RX_CODE);
 #endif
 
                 if(etf.file_open) {
@@ -330,6 +348,8 @@ static void *run(hashpipe_thread_args_t * args)
                 strcpy(prior_receiver,gbtstatus.IFV1TNCI);
 #elif SOURCE_FAST
                 strcpy(prior_receiver,faststatus.RECEIVER);
+#elif SOURCE_MRO
+                strcpy(prior_receiver,mrostatus.RX_CODE);
 #endif
                 num_coarse_chan  = db->block[block_idx].header.num_coarse_chan; 
                 prior_run_always = run_always;
@@ -346,6 +366,8 @@ static void *run(hashpipe_thread_args_t * args)
         if(testmode || run_always && gbtstatus.WEBCNTRL) {
 #elif SOURCE_FAST
         if(testmode || run_always) {
+#elif SOURCE_MRO
+        if(testmode || run_always) {
 #endif
 #ifdef SOURCE_S6
             etf.file_chan = scram.coarse_chan_id;          
@@ -356,6 +378,9 @@ static void *run(hashpipe_thread_args_t * args)
 #elif SOURCE_FAST
             etf.file_chan = 0;                                  // constant - FAST data not coarse channelized
             rv = write_etfits_fast(db, block_idx, &etf, faststatus_p);
+#elif SOURCE_MRO
+            etf.file_chan = 0;
+            rv = write_etfits_mro(db, block_idx, &etf, mrostatus_p);
 #endif
             if(rv) {
                 hashpipe_error(__FUNCTION__, "error error returned from write_etfits()");

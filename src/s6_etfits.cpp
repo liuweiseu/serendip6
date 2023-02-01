@@ -306,7 +306,86 @@ int write_etfits_fast(s6_output_databuf_t *db, int block_idx, etfits_t *etf, fas
     return *status_p;
 }
 #endif
+//----------------------------------------------------------
+int write_etfits_mro(s6_output_databuf_t *db, int block_idx, etfits_t *etf, mrostatus_t *mrostatus_p) {
+//----------------------------------------------------------
+    int row, rv;
+    int nchan, nivals, nsubband;
+    char* temp_str;
+    double temp_dbl;
+    size_t nhits;
 
+    int * status_p = &(etf->status);
+    *status_p = 0;
+
+    // Create the initial file or change to a new one if needed.
+    if (etf->new_run || etf->new_file) {
+        etf->new_file = 0;
+        if (!etf->new_run) {
+            if(etf->file_open) {
+                etfits_close(etf);
+            }
+            etf->integration_cnt = 0;
+        }
+        // TODO update code versions
+        etf->primary_hdr.n_subband = db->block[block_idx].header.num_coarse_chan;
+        etf->primary_hdr.n_chan    = N_FINE_CHAN;
+        //etf->primary_hdr.n_inputs  = N_BEAMS * N_POLS_PER_BEAM;
+        etf->primary_hdr.n_inputs  = N_BORS * N_POLS_PER_BEAM;
+        // in scram, need to look up receiver from array? but in gbtstatus, it's already a string, so just copy it?...
+        // strncpy(etf->primary_hdr.receiver, receiver[gbtstauts_p->receiver], sizeof(etf->primary_hdr.receiver));
+        strncpy(etf->primary_hdr.receiver, mrostatus_p->RX_CODE, sizeof(etf->primary_hdr.receiver));
+        etf->primary_hdr.power_threshold  = (double)POWER_THRESH;
+        etf->primary_hdr.smooth_scale     = (int)SMOOTH_SCALE;
+        // TODO not yet implemented
+        //etf->primary_hdr.bandwidth = ;
+        //etf->primary_hdr.chan_bandwidth = ;
+        //etf->primary_hdr.freq_res = ;
+        etfits_create(etf);
+        if(*status_p) {
+            hashpipe_error(__FUNCTION__, "Error creating/initializing new etfits file");
+            //fprintf(stderr, "Error creating/initializing new etfits file.\n");
+            fits_report_error(stderr, *status_p);
+            exit(1);
+        }    
+        write_primary_header(etf);
+        etf->file_cnt++;
+    }
+
+    // populate hits header data
+    //for(int i=0; i < N_BEAMS*N_POLS_PER_BEAM; i++) {
+    for(int i=0; i < N_BORS*N_POLS_PER_BEAM; i++) {
+        etf->hits_hdr[i].time    = db->block[block_idx].header.time_sec + (double)db->block[block_idx].header.time_nsec / 1000000000.0;
+        etf->hits_hdr[i].ra      = mrostatus_p->SRA[etf->primary_hdr.beam]; // TODO: Check--This is source RA or commanded RA??
+        etf->hits_hdr[i].dec     = mrostatus_p->SDEC[etf->primary_hdr.beam];// TODO: Check--This is source DEC or commanded DEC??
+        etf->hits_hdr[i].beampol = etf->primary_hdr.beam * 2 + etf->primary_hdr.pol;       
+//fprintf(stderr, "beam %d pol %d beampol %d\n", etf->primary_hdr.beam, etf->primary_hdr.pol, etf->hits_hdr[i].beampol);
+    }
+
+    if(! *status_p) write_integration_header_mro(etf, mrostatus_p);
+
+    // no CC powers for FAST (only "one" CC!)
+    //if(! *status_p) nhits = write_ccpwrs(db, block_idx, etf);
+
+    if(! *status_p) nhits = write_hits(db, block_idx, etf);
+
+    etf->integration_cnt++;
+
+    // Now update some key values if no CFITSIO errors
+    if (! *status_p) {
+        etf->tot_rows += nhits;
+        etf->N += 1;
+        *status_p = check_for_file_roll(etf);
+    }
+
+    if(*status_p) {
+        hashpipe_error(__FUNCTION__, "FITS error, exiting");
+        //fprintf(stderr, "FITS error, exiting.\n");
+        exit(1);
+    }
+
+    return *status_p;
+}
 //----------------------------------------------------------
 int etfits_create(etfits_t * etf) {
 //----------------------------------------------------------
@@ -642,22 +721,35 @@ int write_integration_header_mro(etfits_t * etf, mrostatus_t *mrostatus_p) {
         if(! *status_p) fits_movnam_hdu(etf->fptr, BINARY_TBL, (char *)"MROSTATUS", 0, status_p);
     } else {
         // create new HDU
-        if(! *status_p) fits_create_tbl(etf->fptr, BINARY_TBL, 0, 0, NULL, NULL, NULL, (char *)"FASTSTATUS", status_p);
+        if(! *status_p) fits_create_tbl(etf->fptr, BINARY_TBL, 0, 0, NULL, NULL, NULL, (char *)"MROSTATUS", status_p);
     }
-
-    if(! *status_p) fits_update_key(etf->fptr, TSTRING, "EXTNAME",  (char *)"MROSTATUS",  NULL, status_p); 
-    if(! *status_p) fits_update_key(etf->fptr, TINT,    "COARCHID", &mrostatus_p->coarse_chan_id,   NULL, status_p);
-
-    if(! *status_p) fits_update_key(etf->fptr, TDOUBLE, "TIME",     &mrostatus_p->TIME,   NULL, status_p); 
-    if(! *status_p) fits_update_key(etf->fptr, TSTRING, "RECEIVER", &(mrostatus_p->RECEIVER), NULL, status_p); 
-    if(! *status_p) fits_update_key(etf->fptr, TDOUBLE, "SYSTEMP", &(mrostatus_p->ADCRMS), NULL, status_p);
-    if(! *status_p) fits_update_key(etf->fptr, TDOUBLE, "RECVTEMP", &(mrostatus_p->RECEIVER_TEMP), NULL, status_p);
-    if(! *status_p) fits_update_key(etf->fptr, TDOUBLE, "ATMOPRES", &(mrostatus_p->ATMO_PRESSURE), NULL, status_p);
-    if(! *status_p) fits_update_key(etf->fptr, TDOUBLE, "HUMIDITY", &(mrostatus_p->HUMIDITY), NULL, status_p);
-    if(! *status_p) fits_update_key(etf->fptr, TDOUBLE, "EPOCH", &(mrostatus_p->EPOCH), NULL, status_p);
     
-    if(! *status_p) fits_update_key(etf->fptr, TDOUBLE, "ADCRMS", &(mrostatus_p->ADCRMS), NULL, status_p);
-    if(! *status_p) fits_update_key(etf->fptr, TINT,    "ADCRMSTM", &(mrostatus_p->ADCRMSTM), NULL, status_p);
+    if(! *status_p) fits_update_key(etf->fptr, TSTRING, "EXTNAME",      (char *)"MROSTATUS",            NULL, status_p); 
+    if(! *status_p) fits_update_key(etf->fptr, TINT,    "COARCHID",     &mrostatus_p->coarse_chan_id,   NULL, status_p);
+
+    if(! *status_p) fits_update_key(etf->fptr, TSTRING, "SOURCE",       &mrostatus_p->SOURCE,           NULL, status_p); 
+    if(! *status_p) fits_update_key(etf->fptr, TLONG,   "ONSOURCE",     &mrostatus_p->ONSOURCE,         NULL, status_p); 
+    if(! *status_p) fits_update_key(etf->fptr, TSTRING, "SITE",         &mrostatus_p->SITE,             NULL, status_p); 
+    if(! *status_p) fits_update_key(etf->fptr, TSTRING, "RX_CODE",      &mrostatus_p->RX_CODE,          NULL, status_p); 
+    if(! *status_p) fits_update_key(etf->fptr, TSTRING, "YEAR_DOY_UTC", &mrostatus_p->YEAR_DOY_UTC,     NULL, status_p); 
+    if(! *status_p) fits_update_key(etf->fptr, TLONG,   "YEAR",         &mrostatus_p->YEAR,             NULL, status_p); 
+    if(! *status_p) fits_update_key(etf->fptr, TLONG,   "DOY_UTC",      &mrostatus_p->DOY_UTC,          NULL, status_p);
+    if(! *status_p) fits_update_key(etf->fptr, TLONG,   "UTC",          &mrostatus_p->UTC,              NULL, status_p);  
+    if(! *status_p) fits_update_key(etf->fptr, TDOUBLE, "LO_FREQ",      &mrostatus_p->LO_FREQ,          NULL, status_p); 
+    if(! *status_p) fits_update_key(etf->fptr, TDOUBLE, "TSYS",         &mrostatus_p->TSYS,             NULL, status_p); 
+    if(! *status_p) fits_update_key(etf->fptr, TDOUBLE, "XC",           &mrostatus_p->XC,               NULL, status_p);
+    if(! *status_p) fits_update_key(etf->fptr, TDOUBLE, "YC",           &mrostatus_p->YC,               NULL, status_p);
+    if(! *status_p) fits_update_key(etf->fptr, TDOUBLE, "Z1C",          &mrostatus_p->Z1C,              NULL, status_p);
+    if(! *status_p) fits_update_key(etf->fptr, TDOUBLE, "Z2C",          &mrostatus_p->Z2C,              NULL, status_p);
+    if(! *status_p) fits_update_key(etf->fptr, TDOUBLE, "Z3C",          &mrostatus_p->Z3C,              NULL, status_p); 
+    if(! *status_p) fits_update_key(etf->fptr, TDOUBLE, "XA",           &mrostatus_p->XA,               NULL, status_p); 
+    if(! *status_p) fits_update_key(etf->fptr, TDOUBLE, "YA",           &mrostatus_p->YA,               NULL, status_p);
+    if(! *status_p) fits_update_key(etf->fptr, TDOUBLE, "Z1A",          &mrostatus_p->Z1A,              NULL, status_p);
+    if(! *status_p) fits_update_key(etf->fptr, TDOUBLE, "Z2A",          &mrostatus_p->Z2A,              NULL, status_p);
+    if(! *status_p) fits_update_key(etf->fptr, TDOUBLE, "Z3A",          &mrostatus_p->Z3A,              NULL, status_p);
+    if(! *status_p) fits_update_key(etf->fptr, TLONG,   "SUBMODE",      &mrostatus_p->SUBMODE,          NULL, status_p);
+    if(! *status_p) fits_update_key(etf->fptr, TSTRING, "RX_SUB",       &mrostatus_p->RX_SUB,           NULL, status_p);
+    if(! *status_p) fits_update_key(etf->fptr, TLONG,   "SCU_STATUS",   &mrostatus_p->STATUS,           NULL, status_p);
 
     if (*status_p) {
         hashpipe_error(__FUNCTION__, "Error writing integration header");

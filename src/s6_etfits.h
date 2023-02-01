@@ -88,6 +88,7 @@ int check_for_file_roll(etfits_t *etf);
 int write_etfits(s6_output_databuf_t      *db, int block_idx, etfits_t *etf, scram_t      *scram_p);
 int write_etfits_gbt(s6_output_databuf_t  *db, int block_idx, etfits_t *etf, gbtstatus_t  *gbtstatus_p);
 int write_etfits_fast(s6_output_databuf_t *db, int block_idx, etfits_t *etf, faststatus_t *faststatus_p);
+int write_etfits_mro(s6_output_databuf_t *db, int block_idx, etfits_t *etf, mrostatus_t *mrostatus_p);
 int etfits_create(etfits_t *etf);
 int etfits_close(etfits_t *etf);
 int write_primary_header(etfits_t *etf);
