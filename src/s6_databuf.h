@@ -7,7 +7,6 @@
 //#include "config.h"
 //#include "s6GPU.h"
 #define SOURCE_MRO
-//#define SOURCE_FAST
 
 #define PAGE_SIZE               (4096)
 //#define CACHE_ALIGNMENT       (128)

@@ -433,6 +433,7 @@ int etfits_create(etfits_t * etf) {
 #ifdef SOURCE_FAST
     sprintf(file_name_str, "%s_%01d_%01d_%04d%02d%02d_%02d%02d%02d", 
 #else
+    //TODO: ADD MRO code
     sprintf(file_name_str, "%s_%04d_%04d%02d%02d_%02d%02d%02d", 
 #endif
             etf->primary_hdr.receiver,
@@ -440,6 +441,7 @@ int etfits_create(etfits_t * etf) {
 	    etf->primary_hdr.beam + 1,
 	    etf->primary_hdr.pol,
 #else
+    //TODO: ADD MRO code
             etf->file_chan,
 #endif
             1900+tm_now.tm_year, 1+tm_now.tm_mon, tm_now.tm_mday, 
@@ -456,6 +458,8 @@ int etfits_create(etfits_t * etf) {
     sprintf(template_file, "%s/%s", etf->s6_dir, ETFITS_GBT_TEMPLATE);
 #elif SOURCE_FAST
     sprintf(template_file, "%s/%s", etf->s6_dir, ETFITS_FAST_TEMPLATE);
+#elif SOURCE_MRO
+    sprintf(template_file, "%s/%s", etf->s6_dir, ETFITS_FAST_MRO);
 #endif
     if(! *status_p) fits_create_template(&(etf->fptr), etf->filename_working, template_file, status_p);
 
@@ -950,6 +954,7 @@ int write_hits_header(etfits_t * etf, int borspol, size_t nhits, size_t missed_p
 #ifdef SOURCE_FAST
     if(! *status_p) fits_update_key(etf->fptr, TDOUBLE, "TIME",    &(etf->hits_hdr[borspol].time),    NULL, status_p);    
 #else
+    //TODO: ADD MRO code
     if(! *status_p) fits_update_key(etf->fptr, TINT,    "TIME",    &(etf->hits_hdr[borspol].time),    NULL, status_p);    
 #endif
     if(! *status_p) fits_update_key(etf->fptr, TDOUBLE, "RA",      &(etf->hits_hdr[borspol].ra),      NULL, status_p);   
@@ -1005,6 +1010,7 @@ int write_hits(s6_output_databuf_t *db, int block_idx, etfits_t *etf) {
 #ifdef SOURCE_FAST
 		if(input == 0) {	// only 1 input for FAST but pol could be >= 0
 #else
+        //TODO: ADD MRO code
                 if(db->block[block_idx].pol[bors][hit_i] == input) {
 #endif
                     int this_fine_chan =  db->block[block_idx].fine_chan[bors][hit_i];

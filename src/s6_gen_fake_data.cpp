@@ -77,7 +77,7 @@ void gen_time_series(int input_i, std::vector<char> &h_raw_timeseries) {
 }
 
 #else
-
+// TODO: ADD MRO code
 // Functors
 // -----------------------------------------------------------------------------
 char2 generate_gaussian_complex_8b() {
@@ -143,6 +143,7 @@ void gen_fake_data(uint64_t *data) {
     char * c2data = (char *)data;       // input buffer pointer cast to char pointer
     int sample_size = sizeof(char);
 #else 
+    //TODO: ADD MRO code
     std::vector<char2>   h_raw_timeseries_gen(n_gpu_input_elements);
     char2 * c2data = (char2 *)data;     // input buffer pointer cast to char2 pointer
     int sample_size = sizeof(char2);

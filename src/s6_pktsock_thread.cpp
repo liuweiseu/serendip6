@@ -31,6 +31,10 @@
 #include <smmintrin.h>
 #include <immintrin.h>
 #endif
+#ifndef SOURCE_MRO
+#include <smmintrin.h>
+#include <immintrin.h>
+#endif
 
 #include "hashpipe.h"
 #include "s6_databuf.h"
@@ -59,6 +63,8 @@
 static const uint64_t     Nm = N_TIME_SAMPLES / N_SPECTRA_PER_PACKET;
 static const unsigned int N_PACKETS_PER_BLOCK = Nm * N_BEAMS;           // for GBT, this is just Nm
 #ifdef SOURCE_FAST
+static const unsigned int N_BYTES_PER_CHAN = 1;     // real 8 bit samples for one pol
+#elif SOURCE_MRO
 static const unsigned int N_BYTES_PER_CHAN = 1;     // real 8 bit samples for one pol
 #else
 static const unsigned int N_BYTES_PER_CHAN = 4;     // complex 8 bit samples for two pols
@@ -166,6 +172,7 @@ void dump_mcnt_log(int pchan)
 #endif
 
 #ifndef SOURCE_FAST
+//TODO: MRO
 static inline void * s6_memcpy(uint64_t * out, const uint64_t * const in, size_t n_bytes) {
 //#define bitload256
   __m128i lo128, hi128;
@@ -231,6 +238,7 @@ static inline void get_header(unsigned char *p_frame, packet_header_t * pkt_head
 							//   source ID goes as b0p0=0, b0p1=1, b1p0=2, etc (sid % 2 = pol)
 //fprintf(stdout, "[%016lx] beam %d pol %d ", raw_header, beam, pol);
 //print_pkt_header(pkt_header);
+//TODO: MRO
 #endif
 
 #ifdef SOURCE_S6
@@ -240,6 +248,9 @@ static inline void get_header(unsigned char *p_frame, packet_header_t * pkt_head
     // Compute nchan from packet size (minus UDP header and S6 header and CRC words, and two interframe gaps == 5 words of overhead)
     pkt_header->nchan = (PKT_UDP_SIZE(p_frame) - 5*8)/ N_BYTES_PER_CHAN / N_SPECTRA_PER_PACKET; 
 #elif SOURCE_FAST
+    // Compute nchan from packet size (minus UDP header and S6 header and CRC words)
+    pkt_header->nchan = (PKT_UDP_SIZE(p_frame) - 3*8)/ N_BYTES_PER_CHAN / N_SPECTRA_PER_PACKET; 
+#elif SOURCE_MRO
     // Compute nchan from packet size (minus UDP header and S6 header and CRC words)
     pkt_header->nchan = (PKT_UDP_SIZE(p_frame) - 3*8)/ N_BYTES_PER_CHAN / N_SPECTRA_PER_PACKET; 
 #endif
@@ -597,6 +608,8 @@ static inline uint64_t process_packet(
 #ifdef SOURCE_FAST
 	s6_input_databuf_p->block[pkt_block_i].header.missed_pkts[0]--;    // FAST: sid (encoding beam and pol) is constant 
 									   //  for a given instance and there is only 1 BORS
+#elif SOURCE_MRO
+    s6_input_databuf_p->block[pkt_block_i].header.missed_pkts[0]--;
 #else
 	s6_input_databuf_p->block[pkt_block_i].header.missed_pkts[pkt_header.sid]--;    // TODO GBT - is this correct?  sid is constant for a given instance
 #endif
@@ -648,6 +661,7 @@ static inline uint64_t process_packet(
 #endif
     // Use length from packet (minus UDP header and minus HEADER word (no CRC word))
     memcpy(dest_p, payload_p, PKT_UDP_SIZE(p_frame) - 8 - 8);
+//TODO: MRO
 #endif              // end SOURCE_FAST
 
 	return netmcnt;
@@ -732,6 +746,8 @@ static int init(hashpipe_thread_args_t *args)
     int bindport = 60000;
 #elif SOURCE_FAST
     int bindport = 12346;
+#elif SOURCE_MRO
+    int bindport = 12346;
 #endif
 
     hashpipe_status_t st = args->st;
@@ -809,6 +825,7 @@ static int init(hashpipe_thread_args_t *args)
         pthread_exit(NULL);
     }
     sprintf(s6_group, "239.1.%d.%d", beam, 3+pol);     // pol 0 group ends in 3, pol 1 group ends in 4
+//TODO: MRO
 #endif
 
    	/* set up socket */

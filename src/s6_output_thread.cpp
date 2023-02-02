@@ -152,6 +152,7 @@ static void *run(hashpipe_thread_args_t * args)
         hgetr8(st.buf, "ADCRMS", &(faststatus.ADCRMS));
         hgeti8(st.buf, "ADCRMSTM", &(faststatus.ADCRMSTM));
 //fprintf(stderr, "rms %lf\n", faststatus_p->ADCRMS);
+//TODO: ADD MRO Code
 #endif
 
 		// time stamp for this block of hits
@@ -217,6 +218,9 @@ static void *run(hashpipe_thread_args_t * args)
         }
 #endif
 #endif
+#ifdef SOURCE_MRO
+        // TODO: add code for MRO receiver check
+#endif
 #ifdef SOURCE_DIBAS
         // receiver check
         if(!atoi(gbtstatus.IFV1BW)) {
@@ -231,9 +235,7 @@ static void *run(hashpipe_thread_args_t * args)
             }
         }
 #endif
-#ifdef SOURCE_MRO
-        // TODO: add code for MRO receiver check
-#endif
+
 //fprintf(stderr, "flag 0x%08x idle %d\n", idle_flag, idle);
         if(idle_flag) {
             if(!idle) {    // if not already idling
@@ -443,6 +445,9 @@ static void *run(hashpipe_thread_args_t * args)
 #endif
 #ifdef SOURCE_FAST
 // nothing here because FAST data are not coarse channelized
+#endif
+#ifdef SOURCE_MRO
+// nothing here because MRO data are not coarse channelized
 #endif
         hashpipe_status_unlock_safe(&st);
 

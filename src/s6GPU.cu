@@ -81,6 +81,7 @@ device_vectors_t * init_device_vectors() {
     dv_p->hit_powers_p=0; 
 
 #ifndef SOURCE_FAST
+//TODO: MRO
     dv_p->hit_indices_p      = new thrust::device_vector<int>();
     dv_p->hit_powers_p       = new thrust::device_vector<float>;
     dv_p->hit_baselines_p    = new thrust::device_vector<float>;

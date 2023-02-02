@@ -16,6 +16,8 @@ const char *receiver[3] = {"AO_NOREC", "AO_ALFA", "AO_327MHz"};
 const char *receiver[3] = {"GB_NOREC", "GB_ONE", "GB_TWO"};
 #elif SOURCE_FAST
 const char *receiver[3] = {"FAST_NOREC", "FAST_ONE", "FAST_TWO"};
+#elif SOURCE_MRO
+const char *receiver[3] = {"MRO_NOREC", "MRO_ONE", "MRO_TWO"};
 #endif
 
 //----------------------------------------------------------

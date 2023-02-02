@@ -24,7 +24,12 @@
 #include "hashpipe.h"
 #include "s6_databuf.h"
 #include "s6GPU.h"
-#include "s6_obs_data_fast.h"
+
+#ifdef SOURCE_FAST
+    #include "s6_obs_data_fast.h"
+#elif SOURCE_MRO
+    #include "s6_obs_data_mro.h"
+#endif
 
 #define ELAPSED_NS(start,stop) \
   (((int64_t)stop.tv_sec-start.tv_sec)*1000*1000*1000+(stop.tv_nsec-start.tv_nsec))
@@ -55,6 +60,11 @@ int init_gpu_memory(uint64_t num_coarse_chan, cufftHandle *fft_plan_p, int initi
     cufft_config.odist     = cufft_config.nfft_;                        
 #ifdef SOURCE_FAST
 	fprintf(stderr, "configuring cuFFT for real to complex transforms (cufftType %d)\n", CUFFT_R2C);
+	cufft_config.fft_type = CUFFT_R2C;								
+    cufft_config.nbatch    = (num_coarse_chan);                             // only FFT the utilized chans      
+    cufft_config.istride   = N_COARSE_CHAN / N_SUBSPECTRA_PER_SPECTRUM;     // (must stride over all (max) chans)
+#elif SOURCE_MRO
+    fprintf(stderr, "configuring cuFFT for real to complex transforms (cufftType %d)\n", CUFFT_R2C);
 	cufft_config.fft_type = CUFFT_R2C;								
     cufft_config.nbatch    = (num_coarse_chan);                             // only FFT the utilized chans      
     cufft_config.istride   = N_COARSE_CHAN / N_SUBSPECTRA_PER_SPECTRUM;     // (must stride over all (max) chans)
@@ -104,6 +114,9 @@ static void *run(hashpipe_thread_args_t * args)
 #ifdef SOURCE_FAST
     faststatus_t faststatus;
     faststatus_t * faststatus_p = &faststatus;
+#elif SOURCE_MRO
+    mrostatus_t mrostatus;
+    mrostatus_t * mrostatus_p = &mrostatus;
 #endif
 
 
@@ -219,6 +232,8 @@ static void *run(hashpipe_thread_args_t * args)
                sizeof(uint64_t) * N_BEAM_SLOTS);
 #ifdef SOURCE_FAST
 	db_out->block[curblock_out].header.sid = db_in->block[curblock_in].header.sid;
+#elif SOURCE_MRO
+    db_out->block[curblock_out].header.sid = db_in->block[curblock_in].header.sid;
 #endif
 
         // only do spectroscopy if there are more than zero channels!
@@ -255,6 +270,7 @@ static void *run(hashpipe_thread_args_t * args)
             // At FAST, data are not grouped
             int n_bors = N_SUBSPECTRA_PER_SPECTRUM;
             uint64_t n_bytes_per_bors  = N_BYTES_PER_SUBSPECTRUM * N_TIME_SAMPLES;
+//TODO: ADD MRO Code
 #endif
             for(int bors_i = 0; bors_i < n_bors; bors_i++) {
                 size_t nhits = 0; 
@@ -266,7 +282,7 @@ fprintf(stderr, "(n_)pol = %lu num_coarse_chan = %lu n_bytes_per_bors = %lu  bor
         &db_in->block[curblock_in].data[bors_i*n_bytes_per_bors/sizeof(uint64_t)]);
 #endif
 
-#ifdef SOURCE_FAST
+#ifdef SOURCE_FAST || SOURCE_MRO
                 nhits = spectroscopy(num_coarse_chan/N_SUBSPECTRA_PER_SPECTRUM,     // n_cc  
                                      N_FINE_CHAN,                                   // n_fc    
                                      N_TIME_SAMPLES,                                // n_ts
@@ -313,6 +329,7 @@ fprintf(stderr, "(n_)pol = %lu num_coarse_chan = %lu n_bytes_per_bors = %lu  bor
 #ifdef SOURCE_FAST
 	hputr8(st.buf, "ADCRMS", faststatus_p->ADCRMS);
 	hputi8(st.buf, "ADCRMSTM", faststatus_p->ADCRMSTM);
+    //TODO: ADD MRO Code
 #endif
         hashpipe_status_unlock_safe(&st);
 
