@@ -302,7 +302,21 @@ fprintf(stderr, "(n_)pol = %lu num_coarse_chan = %lu n_bytes_per_bors = %lu  bor
         &db_in->block[curblock_in].data[bors_i*n_bytes_per_bors/sizeof(uint64_t)]);
 #endif
 
-#ifdef SOURCE_FAST || SOURCE_MRO
+#ifdef SOURCE_FAST
+                nhits = spectroscopy(num_coarse_chan/N_SUBSPECTRA_PER_SPECTRUM,     // n_cc  
+                                     N_FINE_CHAN,                                   // n_fc    
+                                     N_TIME_SAMPLES,                                // n_ts
+                                     db_in->block[curblock_in].header.sid % 2,      // n_pol, the pol itself, one per data strem
+                                     bors_i,                                        // bors         
+                                     maxhits,                                       // maxhits
+                                     MAXGPUHITS,                                    // maxgpuhits
+                                     power_thresh,                                  // power_thresh
+                                     SMOOTH_SCALE,                                  // smooth_scale
+                                     &db_in->block[curblock_in].data[bors_i*n_bytes_per_bors/sizeof(uint64_t)], // input_data   0,1
+                                     n_bytes_per_bors,                              // input_data_bytes                         /2
+                                     &db_out->block[curblock_out],                  // s6_output_block
+                                     gpu_sem);                                      // semaphore to serialize GPU access
+#elif SOURCE_MRO
                 nhits = spectroscopy(num_coarse_chan/N_SUBSPECTRA_PER_SPECTRUM,     // n_cc  
                                      N_FINE_CHAN,                                   // n_fc    
                                      N_TIME_SAMPLES,                                // n_ts

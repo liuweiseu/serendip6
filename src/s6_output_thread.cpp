@@ -20,6 +20,7 @@
 #include "s6_obs_data.h"
 #include "s6_obs_data_gbt.h"
 #include "s6_obs_data_fast.h"
+#include "s6_obs_data_mro.h"
 #include "s6_etfits.h"
 #include "s6_redis.h"
 
@@ -158,11 +159,15 @@ static void *run(hashpipe_thread_args_t * args)
         hgetr8(st.buf, "ADCRMS", &(mrostatus.ADCRMS));
         hgeti8(st.buf, "ADCRMSTM", &(mrostatus.ADCRMSTM));
 #endif
-
+#ifdef SOURCE_FAST
 		// time stamp for this block of hits
 		faststatus_p->TIME = db->block[block_idx].header.time_sec +
 						     db->block[block_idx].header.time_nsec/1e9;
-
+#elif SOURCE_MRO
+        // time stamp for this block of hits
+		mrostatus_p->TIME = db->block[block_idx].header.time_sec +
+						     db->block[block_idx].header.time_nsec/1e9;
+#endif
         //hgeti4(st.buf, "IDLE", &idle);
         hgeti4(st.buf, "TESTMODE", &testmode);
         if(!testmode) {
@@ -189,7 +194,7 @@ static void *run(hashpipe_thread_args_t * args)
 			strcpy(faststatus.RECEIVER, "S6TEST");					// 	   and RECEIVER (which indicates
 #elif SOURCE_MRO
             memset((void *)mrostatus_p, 0, sizeof(mrostatus_t));  // test mode - zero entire gbtstatus
-			strcpy(faststatus.RX_CODE, "S6TEST");					// 	   and RECEIVER (which indicates																//     test mode for downstream processes
+			strcpy(mrostatus.RX_CODE, "S6TEST");					// 	   and RECEIVER (which indicates																//     test mode for downstream processes
 #endif
         }
 

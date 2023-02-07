@@ -14,6 +14,7 @@
 #include "s6_obs_data.h"
 #include "s6_obs_data_gbt.h"
 #include "s6_obs_data_fast.h"
+#include "s6_obs_data_mro.h"
 #include "s6_etfits.h"
 #include "s6_obsaux.h"
 
@@ -462,7 +463,7 @@ int etfits_create(etfits_t * etf) {
 #elif SOURCE_FAST
     sprintf(template_file, "%s/%s", etf->s6_dir, ETFITS_FAST_TEMPLATE);
 #elif SOURCE_MRO
-    sprintf(template_file, "%s/%s", etf->s6_dir, ETFITS_FAST_MRO);
+    sprintf(template_file, "%s/%s", etf->s6_dir, ETFITS_MRO_TEMPLATE);
 #endif
     if(! *status_p) fits_create_template(&(etf->fptr), etf->filename_working, template_file, status_p);
 
@@ -756,7 +757,7 @@ int write_integration_header_mro(etfits_t * etf, mrostatus_t *mrostatus_p) {
     if(! *status_p) fits_update_key(etf->fptr, TDOUBLE, "Z3A",          &mrostatus_p->Z3A,              NULL, status_p);
     if(! *status_p) fits_update_key(etf->fptr, TLONG,   "SUBMODE",      &mrostatus_p->SUBMODE,          NULL, status_p);
     if(! *status_p) fits_update_key(etf->fptr, TSTRING, "RX_SUB",       &mrostatus_p->RX_SUB,           NULL, status_p);
-    if(! *status_p) fits_update_key(etf->fptr, TLONG,   "SCU_STATUS",   &mrostatus_p->STATUS,           NULL, status_p);
+    if(! *status_p) fits_update_key(etf->fptr, TLONG,   "SCU_STATUS",   &mrostatus_p->SCU_STATUS,           NULL, status_p);
 
     if (*status_p) {
         hashpipe_error(__FUNCTION__, "Error writing integration header");
@@ -956,7 +957,7 @@ int write_hits_header(etfits_t * etf, int borspol, size_t nhits, size_t missed_p
 
 #ifdef SOURCE_FAST
     if(! *status_p) fits_update_key(etf->fptr, TDOUBLE, "TIME",    &(etf->hits_hdr[borspol].time),    NULL, status_p);    
-#elif
+#elif SOURCE_MRO
     if(! *status_p) fits_update_key(etf->fptr, TDOUBLE, "TIME",    &(etf->hits_hdr[borspol].time),    NULL, status_p);  
 #else
     if(! *status_p) fits_update_key(etf->fptr, TINT,    "TIME",    &(etf->hits_hdr[borspol].time),    NULL, status_p);    

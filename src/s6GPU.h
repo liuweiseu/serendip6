@@ -31,7 +31,7 @@ typedef struct {
     int     odist;          // distance between 1st output elements of consecutive batches
 } cufft_config_t;
 
-#ifdef SOURCE_FAST || SOURCE_MRO
+#if defined(SOURCE_FAST) || defined(SOURCE_MRO)
 // uncomment exactly one REALLOC_x
 //#define REALLOC_CUB
 //#define REALLOC_STD

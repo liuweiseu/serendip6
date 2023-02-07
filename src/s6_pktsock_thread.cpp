@@ -171,7 +171,7 @@ void dump_mcnt_log(int pchan)
 }
 #endif
 
-#ifndef SOURCE_FAST || SOURCE_MRO
+#if !defined(SOURCE_FAST) && !defined(SOURCE_MRO)
 static inline void * s6_memcpy(uint64_t * out, const uint64_t * const in, size_t n_bytes) {
 //#define bitload256
   __m128i lo128, hi128;
@@ -660,7 +660,12 @@ static inline uint64_t process_packet(
 	        memcpy(dest_p, src_p, N_BYTES_PER_SUBSPECTRUM);
         }
     }
-#elif SOURCE_FAST || SOURCE_MRO	// end SOURCE_DIBAS 
+#elif SOURCE_FAST	// end SOURCE_DIBAS 
+    const uint64_t *src_p = payload_p;
+    dest_p = s6_input_databuf_p->block[pkt_block_i].data            // start of block
+        + pkt_mcnt % Nm * N_SPECTRA_PER_PACKET/sizeof(uint64_t);    // offset within block 
+//#define PRINT_PACKET_PLACEMENT_INFO
+#elif SOURCE_MRO
     const uint64_t *src_p = payload_p;
     dest_p = s6_input_databuf_p->block[pkt_block_i].data            // start of block
         + pkt_mcnt % Nm * N_SPECTRA_PER_PACKET/sizeof(uint64_t);    // offset within block 

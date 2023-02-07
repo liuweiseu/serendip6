@@ -28,7 +28,7 @@
 #include "s6_databuf.h"
 #include "hashpipe.h"
 
-#ifdef SOURCE_FAST || SOURCE_MRO
+#if defined(SOURCE_FAST) || defined(SOURCE_MRO)
 // Functors
 // -----------------------------------------------------------------------------
 char generate_gaussian_real_8b() {
@@ -137,7 +137,11 @@ void gen_fake_data(uint64_t *data) {
 // data points to the input buffer
 // -----------------------------------------------------------------------------
 	uint64_t n_gpu_input_elements = N_TIME_SAMPLES *  N_COARSE_CHAN_PER_BORS;
-#ifdef SOURCE_FAST || SOURCE_MRO
+#ifdef SOURCE_FAST
+    std::vector<char>   h_raw_timeseries_gen(n_gpu_input_elements);
+    char * c2data = (char *)data;       // input buffer pointer cast to char pointer
+    int sample_size = sizeof(char);
+#elif SOURCE_MRO
     std::vector<char>   h_raw_timeseries_gen(n_gpu_input_elements);
     char * c2data = (char *)data;       // input buffer pointer cast to char pointer
     int sample_size = sizeof(char);

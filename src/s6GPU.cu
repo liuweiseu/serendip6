@@ -80,12 +80,11 @@ device_vectors_t * init_device_vectors() {
     dv_p->hit_indices_p=0;  
     dv_p->hit_powers_p=0; 
 
-#ifndef SOURCE_FAST || SOURCE_MRO
+#if !defined(SOURCE_FAST) && !defined(SOURCE_MRO)
     dv_p->hit_indices_p      = new thrust::device_vector<int>();
     dv_p->hit_powers_p       = new thrust::device_vector<float>;
     dv_p->hit_baselines_p    = new thrust::device_vector<float>;
 #endif
-
     return dv_p;
 }
 
@@ -561,7 +560,7 @@ size_t find_hits(device_vectors_t *dv_p, int n_element, size_t maxhits, float po
     return nhits;
 }    
 
-#ifdef SOURCE_FAST || SOURCE_MRO
+#if defined(SOURCE_FAST) || defined(SOURCE_MRO)
 #if 0
 int reduce_coarse_channels(device_vectors_t * dv_p, 
                            s6_output_block_t *s6_output_block,  
@@ -673,7 +672,7 @@ inline int dibas_coarse_chan(long spectrum_index, int sub_spectrum_i) {
     return((long)floor((double)spectrum_index/2) + sub_spectrum_i * N_COARSE_CHAN / N_SUBSPECTRA_PER_SPECTRUM);
 }
 
-#ifndef SOURCE_FAST || SOURCE_MRO
+#if !defined(SOURCE_FAST) && !defined(SOURCE_MRO)
 int spectroscopy(int n_cc,         		// N coarse chans
                  int n_fc,       		// N fine chans (== n_ts in this case)
                  int n_ts,       		// N time samples
@@ -849,7 +848,7 @@ int spectroscopy(int n_cc,         		// N coarse chans
 }
 #endif
 
-#ifdef SOURCE_FAST || SOURCE_MRO   
+#if defined(SOURCE_FAST) || defined(SOURCE_MRO)   
 #ifdef REALLOC_CUB
 int spectroscopy(int n_cc, 				// N coarse chans
                  int n_fc,    			// N fine chans

@@ -201,7 +201,7 @@ int get_obs_mro_info_from_redis(mrostatus_t * mrostatus,
     if (c == NULL || c->err) {
         if (c) {
             hashpipe_error(__FUNCTION__, c->errstr);
-            redisFree(c);37824118
+            redisFree(c);
         } else {
             hashpipe_error(__FUNCTION__, "Connection error: can't allocate redis context");
         }
