@@ -270,7 +270,27 @@ static void *run(hashpipe_thread_args_t * args)
             // At FAST, data are not grouped
             int n_bors = N_SUBSPECTRA_PER_SPECTRUM;
             uint64_t n_bytes_per_bors  = N_BYTES_PER_SUBSPECTRUM * N_TIME_SAMPLES;
-//TODO: ADD MRO Code
+#elif SOURCE_MRO
+#if 1
+	    // first get the RMS and determine if data are good
+	    char * samples = (char *) &db_in->block[curblock_in].data;
+	    double sum_squared, rms;
+	    int rms_i;
+	    for(rms_i = 0, sum_squared = 0; rms_i < RMS_LENGTH; rms_i++) {
+	    	//val = db_in->block[curblock_in].data[rms_i];
+        	sum_squared += samples[rms_i] * samples[rms_i];
+//fprintf(stderr, "val %d sum_squared %lf\n", (int)samples[rms_i], sum_squared);
+	    }
+    	    rms = sqrt((double)sum_squared/RMS_LENGTH);
+//fprintf(stderr, "rms %lf\n", rms);	
+	    //db_out->block[curblock_out].header.voltage_rms = rms;
+  	    mrostatus_p->ADCRMS = rms;
+  	    mrostatus_p->ADCRMSTM = time(NULL);
+#endif
+
+            // At MRO, data are not grouped
+            int n_bors = N_SUBSPECTRA_PER_SPECTRUM;
+            uint64_t n_bytes_per_bors  = N_BYTES_PER_SUBSPECTRUM * N_TIME_SAMPLES;
 #endif
             for(int bors_i = 0; bors_i < n_bors; bors_i++) {
                 size_t nhits = 0; 
@@ -329,7 +349,9 @@ fprintf(stderr, "(n_)pol = %lu num_coarse_chan = %lu n_bytes_per_bors = %lu  bor
 #ifdef SOURCE_FAST
 	hputr8(st.buf, "ADCRMS", faststatus_p->ADCRMS);
 	hputi8(st.buf, "ADCRMSTM", faststatus_p->ADCRMSTM);
-    //TODO: ADD MRO Code
+#elif SOURCE_MRO
+    hputr8(st.buf, "ADCRMS", mrostatus_p->ADCRMS);
+	hputi8(st.buf, "ADCRMSTM", mrostatus_p->ADCRMSTM);
 #endif
         hashpipe_status_unlock_safe(&st);
 

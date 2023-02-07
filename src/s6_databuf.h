@@ -180,6 +180,8 @@ typedef struct s6_output_block_header {
   uint64_t num_coarse_chan;         // number of actual coarse channels (<= N_COARSE_CHAN)
 #ifdef SOURCE_FAST
   uint64_t sid;                     // source ID, beampol for FAST
+#elif SOURCE_MRO
+  uint64_t sid;
 #endif
   uint64_t time_sec;				// unix time that this block (on the input side) was marked complete
   uint64_t time_nsec;				// nanoseconds past time_sec

@@ -80,8 +80,7 @@ device_vectors_t * init_device_vectors() {
     dv_p->hit_indices_p=0;  
     dv_p->hit_powers_p=0; 
 
-#ifndef SOURCE_FAST
-//TODO: MRO
+#ifndef SOURCE_FAST || SOURCE_MRO
     dv_p->hit_indices_p      = new thrust::device_vector<int>();
     dv_p->hit_powers_p       = new thrust::device_vector<float>;
     dv_p->hit_baselines_p    = new thrust::device_vector<float>;
@@ -562,7 +561,7 @@ size_t find_hits(device_vectors_t *dv_p, int n_element, size_t maxhits, float po
     return nhits;
 }    
 
-#ifdef SOURCE_FAST
+#ifdef SOURCE_FAST || SOURCE_MRO
 #if 0
 int reduce_coarse_channels(device_vectors_t * dv_p, 
                            s6_output_block_t *s6_output_block,  
@@ -674,7 +673,7 @@ inline int dibas_coarse_chan(long spectrum_index, int sub_spectrum_i) {
     return((long)floor((double)spectrum_index/2) + sub_spectrum_i * N_COARSE_CHAN / N_SUBSPECTRA_PER_SPECTRUM);
 }
 
-#ifndef SOURCE_FAST
+#ifndef SOURCE_FAST || SOURCE_MRO
 int spectroscopy(int n_cc,         		// N coarse chans
                  int n_fc,       		// N fine chans (== n_ts in this case)
                  int n_ts,       		// N time samples
@@ -850,7 +849,7 @@ int spectroscopy(int n_cc,         		// N coarse chans
 }
 #endif
 
-#ifdef SOURCE_FAST    
+#ifdef SOURCE_FAST || SOURCE_MRO   
 #ifdef REALLOC_CUB
 int spectroscopy(int n_cc, 				// N coarse chans
                  int n_fc,    			// N fine chans
@@ -1097,6 +1096,9 @@ if(use_thread_sync) cudaThreadSynchronize();
 #elif SOURCE_FAST
         s6_output_block->pol[bors][i]         = pol;   
         s6_output_block->coarse_chan[bors][i] = 0;  // 1 coarse channel for FAST, thus cc number is always 0
+#elif SOURCE_MRO
+        s6_output_block->pol[bors][i]         = pol;   
+        s6_output_block->coarse_chan[bors][i] = 0;  // 1 coarse channel for MRO, thus cc number is always 0
 #endif
         s6_output_block->fine_chan[bors][i]   = hit_index % n_fc;
 //#define PRINT_HIT_INFO
@@ -1404,6 +1406,9 @@ if(use_thread_sync) cudaThreadSynchronize();
         s6_output_block->pol[bors][i]         = dibas_pol(spectrum_index);    
         s6_output_block->coarse_chan[bors][i] = dibas_coarse_chan(spectrum_index, bors);
 #elif SOURCE_FAST
+        s6_output_block->pol[bors][i]         = pol;   
+        s6_output_block->coarse_chan[bors][i] = 0;  // 1 coarse channel for FAST, thus cc number is always 0
+#elif SOURCE_MRO
         s6_output_block->pol[bors][i]         = pol;   
         s6_output_block->coarse_chan[bors][i] = 0;  // 1 coarse channel for FAST, thus cc number is always 0
 #endif
@@ -1715,6 +1720,9 @@ if(use_thread_sync) cudaThreadSynchronize();
         s6_output_block->pol[bors][i]         = dibas_pol(spectrum_index);    
         s6_output_block->coarse_chan[bors][i] = dibas_coarse_chan(spectrum_index, bors);
 #elif SOURCE_FAST
+        s6_output_block->pol[bors][i]         = pol;   
+        s6_output_block->coarse_chan[bors][i] = 0;  // 1 coarse channel for FAST, thus cc number is always 0
+#elif SOURCE_MRO
         s6_output_block->pol[bors][i]         = pol;   
         s6_output_block->coarse_chan[bors][i] = 0;  // 1 coarse channel for FAST, thus cc number is always 0
 #endif

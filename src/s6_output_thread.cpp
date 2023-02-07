@@ -152,7 +152,11 @@ static void *run(hashpipe_thread_args_t * args)
         hgetr8(st.buf, "ADCRMS", &(faststatus.ADCRMS));
         hgeti8(st.buf, "ADCRMSTM", &(faststatus.ADCRMSTM));
 //fprintf(stderr, "rms %lf\n", faststatus_p->ADCRMS);
-//TODO: ADD MRO Code
+#elif SOURCE_MRO
+    etf.primary_hdr.beam = floor(db->block[block_idx].header.sid / 2);
+	etf.primary_hdr.pol  = db->block[block_idx].header.sid % 2;
+        hgetr8(st.buf, "ADCRMS", &(mrostatus.ADCRMS));
+        hgeti8(st.buf, "ADCRMSTM", &(mrostatus.ADCRMSTM));
 #endif
 
 		// time stamp for this block of hits
@@ -219,7 +223,20 @@ static void *run(hashpipe_thread_args_t * args)
 #endif
 #endif
 #ifdef SOURCE_MRO
-        // TODO: add code for MRO receiver check
+#if 1
+        // rms check
+        if(mrostatus.ADCRMS < RMS_THRESH) {
+            if(!BIT_IS_SET(idle_flag, idle_bad_rms)) {   // if bit not already set
+                hashpipe_warn(__FUNCTION__, "Voltage RMS (%lf) is too low - adding as an idle condition", mrostatus.ADCRMS);
+                SET_BIT(idle_flag, idle_bad_rms);
+            }
+        } else {
+            if(BIT_IS_SET(idle_flag, idle_bad_rms)) {    // if bit is currently set
+                hashpipe_warn(__FUNCTION__, "Voltage RMS (%lf) is good - removing as an idle condition", mrostatus.ADCRMS);
+                CLEAR_BIT(idle_flag, idle_bad_rms);
+            }
+        }
+#endif
 #endif
 #ifdef SOURCE_DIBAS
         // receiver check

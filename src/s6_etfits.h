@@ -29,7 +29,9 @@ typedef struct etfits_primary_header {
 #ifdef SOURCE_FAST
     int beam;
     int pol;
-    //TODO: ADD MRO code
+#elif SOURCE_MRO
+    int beam;
+    int pol;
 #endif
 } etfits_primary_header_t;
 

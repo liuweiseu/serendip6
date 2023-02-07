@@ -432,16 +432,19 @@ int etfits_create(etfits_t * etf) {
     localtime_r(&time_now, &tm_now);
 #ifdef SOURCE_FAST
     sprintf(file_name_str, "%s_%01d_%01d_%04d%02d%02d_%02d%02d%02d", 
+#elif SOURCE_MRO
+    sprintf(file_name_str, "%s_%01d_%01d_%04d%02d%02d_%02d%02d%02d",
 #else
-    //TODO: ADD MRO code
     sprintf(file_name_str, "%s_%04d_%04d%02d%02d_%02d%02d%02d", 
 #endif
             etf->primary_hdr.receiver,
 #ifdef SOURCE_FAST
 	    etf->primary_hdr.beam + 1,
 	    etf->primary_hdr.pol,
+#elif SOURCE_MRO
+        etf->primary_hdr.beam + 1,
+	    etf->primary_hdr.pol,
 #else
-    //TODO: ADD MRO code
             etf->file_chan,
 #endif
             1900+tm_now.tm_year, 1+tm_now.tm_mon, tm_now.tm_mday, 
@@ -953,8 +956,9 @@ int write_hits_header(etfits_t * etf, int borspol, size_t nhits, size_t missed_p
 
 #ifdef SOURCE_FAST
     if(! *status_p) fits_update_key(etf->fptr, TDOUBLE, "TIME",    &(etf->hits_hdr[borspol].time),    NULL, status_p);    
+#elif
+    if(! *status_p) fits_update_key(etf->fptr, TDOUBLE, "TIME",    &(etf->hits_hdr[borspol].time),    NULL, status_p);  
 #else
-    //TODO: ADD MRO code
     if(! *status_p) fits_update_key(etf->fptr, TINT,    "TIME",    &(etf->hits_hdr[borspol].time),    NULL, status_p);    
 #endif
     if(! *status_p) fits_update_key(etf->fptr, TDOUBLE, "RA",      &(etf->hits_hdr[borspol].ra),      NULL, status_p);   
@@ -1008,9 +1012,10 @@ int write_hits(s6_output_databuf_t *db, int block_idx, etfits_t *etf) {
 //fprintf(stderr, "input %d bors %d borspol %d\n", input, bors, borspol);
             for(int hit_i=0; hit_i < (size_t)db->block[block_idx].header.nhits[bors]; hit_i++) {
 #ifdef SOURCE_FAST
-		if(input == 0) {	// only 1 input for FAST but pol could be >= 0
+		    if(input == 0) {	// only 1 input for FAST but pol could be >= 0
+#elif SOURCE_MRO
+            if(input == 0) {
 #else
-        //TODO: ADD MRO code
                 if(db->block[block_idx].pol[bors][hit_i] == input) {
 #endif
                     int this_fine_chan =  db->block[block_idx].fine_chan[bors][hit_i];

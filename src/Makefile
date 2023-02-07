@@ -12,6 +12,10 @@ S6_FAST_LIB_CCFLAGS     = -g -fPIC -shared -lstdc++ \
 		     -I. -I$(CUDA_DIR)/include -I$(CUDA_DIR)/targets/x86_64-linux/include -I/usr/local/include -I. -I/usr/local/cfitsio/include\
 		     -L. -L/usr/local/lib -L/usr/lib64 -L/usr/local/lib/hiredis -L/usr/local/cfitsio/lib\
 		     -lhashpipe -lS6GPU -lrt -lhiredis -lcfitsio -lm -std=c++14
+S6_MRO_LIB_CCFLAGS = -g -fPIC -shared -lstdc++ \
+		     -I. -I$(CUDA_DIR)/include -I$(CUDA_DIR)/targets/x86_64-linux/include -I/usr/local/include -I. -I/usr/local/cfitsio/include\
+		     -L. -L/usr/local/lib -L/usr/lib64 -L/usr/local/lib/hiredis -L/usr/local/cfitsio/lib\
+		     -lhashpipe -lS6GPU -lrt -lhiredis -lcfitsio -lm -std=c++14
 S6OBS_AO_PROG_CCFLAGS = -g -lstdc++ \
 		     -I/usr/include/tcl \
 		     -I/usr/local/include \
@@ -65,6 +69,21 @@ S6_FAST_LIB_SOURCES  = s6_databuf.cpp \
 S6_FAST_LIB_INCLUDES = s6_etfits.h \
 		  s6_databuf.h
 
+S6_MRO_LIB_TARGET   = serendip6.so
+S6_MRO_LIB_SOURCES  = s6_databuf.cpp \
+		  s6_pktsock_thread.cpp \
+		  s6_gen_fake_data.cpp \
+		  s6_fake_net_thread.cpp \
+		  s6_gpu_thread.cpp \
+		  s6_output_thread.cpp \
+		  s6_obs_data.cpp \
+		  s6_obs_data_gbt.cpp \
+		  s6_obs_data_mro.cpp \
+		  s6_etfits.cpp \
+		  s6_time.c
+S6_MRO_LIB_INCLUDES = s6_etfits.h \
+		  s6_databuf.h
+
 S6OBS_AO_PROG_TARGET   = s6_observatory_ao
 S6OBS_AO_PROG_SOURCES  = s6_observatory_ao.c \
 		      s6_obsaux_ao.c \
@@ -88,6 +107,7 @@ S6_SCRIPT_TARGET = s6_init.sh
 all_ao:  $(S6GPU_LIB_TARGET) $(S6_LIB_TARGET) $(S6GPUTEST_PROG_TARGET) $(S6EXTRACT_PROG_TARGET) $(S6OBS_AO_PROG_TARGET)  $(S6_CHAN2IF_TARGET)  
 all_gbt: $(S6GPU_LIB_TARGET) $(S6_LIB_TARGET) $(S6GPUTEST_PROG_TARGET) $(S6EXTRACT_PROG_TARGET) $(S6OBS_GBT_PROG_TARGET) $(S6_CHAN2IF_TARGET)
 all_fast: $(S6GPU_LIB_TARGET) $(S6_FAST_LIB_TARGET) $(S6GPUTEST_PROG_TARGET) $(S6EXTRACT_PROG_TARGET) $(S6OBS_GBT_PROG_TARGET) $(S6_CHAN2IF_TARGET)
+all_mro: $(S6GPU_LIB_TARGET) $(S6_MRO_LIB_TARGET) $(S6GPUTEST_PROG_TARGET) $(S6EXTRACT_PROG_TARGET) $(S6OBS_GBT_PROG_TARGET) $(S6_CHAN2IF_TARGET)
 
 cleo_hello: cleo_hello.cpp
 	gcc -o cleo_hello cleo_hello.cpp
@@ -97,6 +117,8 @@ $(S6GPU_LIB_TARGET):      $(S6GPU_LIB_SOURCES) $(S6GPU_LIB_INCLUDES) ;          
 $(S6GPUTEST_PROG_TARGET): $(S6GPUTEST_PROG_SOURCES) $(S6GPUTEST_PROG_INCLUDES) ; $(CC)   -o $(S6GPUTEST_PROG_TARGET) $(S6GPUTEST_PROG_SOURCES) $(S6GPUTEST_CCFLAGS) $(S6_LOCATION) 
 
 $(S6_FAST_LIB_TARGET):         $(S6_FAST_LIB_SOURCES) $(S6_FAST_LIB_INCLUDES) ;                 $(CC)   -o $(S6_FAST_LIB_TARGET) $(S6_FAST_LIB_SOURCES) $(S6_FAST_LIB_CCFLAGS) $(S6_LOCATION)
+
+$(S6_MRO_LIB_TARGET):         $(S6_MRO_LIB_SOURCES) $(S6_MRO_LIB_INCLUDES) ;                 $(CC)   -o $(S6_MRO_LIB_TARGET) $(S6_MRO_LIB_SOURCES) $(S6_MRO_LIB_CCFLAGS) $(S6_LOCATION)
 
 $(S6OBS_PROG_TARGET):     $(S6OBS_PROG_SOURCES) $(S6OBS_PROG_INCLUDES) ;         $(CC)   -o $(S6OBS_PROG_TARGET) $(S6OBS_PROG_SOURCES) $(S6OBS_PROG_CCFLAGS) $(S6_LOCATION)
 

@@ -171,8 +171,7 @@ void dump_mcnt_log(int pchan)
 }
 #endif
 
-#ifndef SOURCE_FAST
-//TODO: MRO
+#ifndef SOURCE_FAST || SOURCE_MRO
 static inline void * s6_memcpy(uint64_t * out, const uint64_t * const in, size_t n_bytes) {
 //#define bitload256
   __m128i lo128, hi128;
@@ -238,7 +237,19 @@ static inline void get_header(unsigned char *p_frame, packet_header_t * pkt_head
 							//   source ID goes as b0p0=0, b0p1=1, b1p0=2, etc (sid % 2 = pol)
 //fprintf(stdout, "[%016lx] beam %d pol %d ", raw_header, beam, pol);
 //print_pkt_header(pkt_header);
-//TODO: MRO
+#elif SOURCE_MRO
+    raw_header = *(unsigned long long *)PKT_UDP_DATA(p_frame);          // already little endian
+    pkt_header->pchan       =  0;				// not coarse channelized, ie 1 coarse channel
+    pkt_header->mcnt        =  raw_header & 0x00FFFFFFFFFFFFFF;	// "serial number" in FAST parlance
+    unsigned char raw_sid   =  raw_header >> 56;
+//fprintf(stdout, "raw sid %x\n", raw_sid);
+    unsigned char beam      = (raw_sid & 0x3e) >> 1;    // bits 1 through 5 specify the beam (1 indexed!)
+    unsigned char pol       =  raw_sid & 0x01;          // bit 0 specifies the pol
+    pkt_header->sid         =  (beam-1) * 2 + pol;	// we re-index to start at 0 for compatibility and arithmetic ease
+							//   thus sid (and so, BORSPOL) starts at 0
+							//   source ID goes as b0p0=0, b0p1=1, b1p0=2, etc (sid % 2 = pol)
+//fprintf(stdout, "[%016lx] beam %d pol %d ", raw_header, beam, pol);
+//print_pkt_header(pkt_header);
 #endif
 
 #ifdef SOURCE_S6
@@ -649,7 +660,7 @@ static inline uint64_t process_packet(
 	        memcpy(dest_p, src_p, N_BYTES_PER_SUBSPECTRUM);
         }
     }
-#elif SOURCE_FAST	// end SOURCE_DIBAS 
+#elif SOURCE_FAST || SOURCE_MRO	// end SOURCE_DIBAS 
     const uint64_t *src_p = payload_p;
     dest_p = s6_input_databuf_p->block[pkt_block_i].data            // start of block
         + pkt_mcnt % Nm * N_SPECTRA_PER_PACKET/sizeof(uint64_t);    // offset within block 
@@ -661,8 +672,7 @@ static inline uint64_t process_packet(
 #endif
     // Use length from packet (minus UDP header and minus HEADER word (no CRC word))
     memcpy(dest_p, payload_p, PKT_UDP_SIZE(p_frame) - 8 - 8);
-//TODO: MRO
-#endif              // end SOURCE_FAST
+#endif              // end SOURCE_FAST and SOURCE_MRO
 
 	return netmcnt;
     }
@@ -825,7 +835,16 @@ static int init(hashpipe_thread_args_t *args)
         pthread_exit(NULL);
     }
     sprintf(s6_group, "239.1.%d.%d", beam, 3+pol);     // pol 0 group ends in 3, pol 1 group ends in 4
-//TODO: MRO
+#elif SOURCE_MRO
+    hashpipe_status_lock_safe(&st);
+    hgeti4(st.buf, "MROBEAM", &beam);
+    hgeti4(st.buf, "MROPOL", &pol);
+    hashpipe_status_unlock_safe(&st);
+    if(beam == -1 || pol == -1) {
+        hashpipe_error("s6_pktsock_thread", "beam and pol must come from status shmem which in turn comes from cmd line.");
+        pthread_exit(NULL);
+    }
+    sprintf(s6_group, "239.1.%d.%d", beam, 3+pol);     // pol 0 group ends in 3, pol 1 group ends in 4
 #endif
 
    	/* set up socket */
