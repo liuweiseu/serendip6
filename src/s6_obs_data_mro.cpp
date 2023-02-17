@@ -93,7 +93,7 @@ static int s6_redis_get(redisContext *c, redisReply ** reply, const char * query
     char * errstr;
 
 
-    *reply = (redisReply *)redisCommand(c, query);
+    *reply = (redisReply *)redisCommand(c,query);
 
     if(*reply == NULL) {
         errstr = c->errstr;
@@ -128,7 +128,7 @@ int put_obs_mro_info_to_redis(char * fits_filename, mrostatus_t * mrostatus, int
     char my_hostname[200];
     int rv=0;
 
-	const char * host_observatory = "10.128.8.8";
+	//const char * host_observatory = "10.128.8.8";
 	int port_observatory = 6379;
 
     // TODO - sane rv
@@ -163,7 +163,6 @@ int get_obs_mro_info_from_redis(mrostatus_t * mrostatus,
 //----------------------------------------------------------
 
     redisContext *c;
-    redisContext *c_observatory;
     redisReply *reply;
     int rv = 0;
 
@@ -195,66 +194,51 @@ int get_obs_mro_info_from_redis(mrostatus_t * mrostatus,
         exit(1);
     }
 
-#if 1
-	// Observatory DB
-    c_observatory = redisConnectWithTimeout((char *)host_observatory, port_observatory, timeout);
-    if (c == NULL || c->err) {
-        if (c) {
-            hashpipe_error(__FUNCTION__, c->errstr);
-            redisFree(c);
-        } else {
-            hashpipe_error(__FUNCTION__, "Connection error: can't allocate redis context");
-        }
-        exit(1);
-    }
-	//rv = s6_redis_get(c_observatory, &reply,"AUTH mro");
-#endif
 
 	gethostname(computehostname, sizeof(computehostname));
 
 	// Get observatory data 
 	// RA and DEC gathered by name rather than a looped redis query so that all meta data is of a 
 	// single point in time
-	if(!rv && !(rv = s6_redis_get(c,&reply,"get source")))  {s6_strcpy(mrostatus->SOURCE,reply->element[0]->str);       freeReplyObject(reply);}
-    if(!rv && !(rv = s6_redis_get(c,&reply,"get sra")))     {s6_strcpy(mrostatus->SRA,reply->element[0]->str);          freeReplyObject(reply);}
-    if(!rv && !(rv = s6_redis_get(c,&reply,"get sdec")))    {s6_strcpy(mrostatus->SDEC,reply->element[0]->str);         freeReplyObject(reply);}
-    if(!rv && !(rv = s6_redis_get(c,&reply,"get rac")))     {s6_strcpy(mrostatus->RAC,reply->element[0]->str);          freeReplyObject(reply);}
-    if(!rv && !(rv = s6_redis_get(c,&reply,"get dec")))     {s6_strcpy(mrostatus->DEC,reply->element[0]->str);          freeReplyObject(reply);}
-    if(!rv && !(rv = s6_redis_get(c,&reply,"get raer")))    {s6_strcpy(mrostatus->RAER,reply->element[0]->str);         freeReplyObject(reply);}
-    if(!rv && !(rv = s6_redis_get(c,&reply,"get decer")))   {s6_strcpy(mrostatus->DECER,reply->element[0]->str);        freeReplyObject(reply);}
-    if(!rv && !(rv = s6_redis_get(c,&reply,"get azc")))     {mrostatus->AZC = atof(reply->element[0]->str);             freeReplyObject(reply);}
-    if(!rv && !(rv = s6_redis_get(c,&reply,"get elc")))     {mrostatus->ELC = atof(reply->element[0]->str);             freeReplyObject(reply);}
-    if(!rv && !(rv = s6_redis_get(c,&reply,"get aza")))     {mrostatus->AZA = atof(reply->element[0]->str);             freeReplyObject(reply);}
-    if(!rv && !(rv = s6_redis_get(c,&reply,"get ela")))     {mrostatus->ELA = atof(reply->element[0]->str);             freeReplyObject(reply);}
-    if(!rv && !(rv = s6_redis_get(c,&reply,"get azer")))    {mrostatus->AZER= atof(reply->element[0]->str);             freeReplyObject(reply);}
-    if(!rv && !(rv = s6_redis_get(c,&reply,"get eler")))    {mrostatus->ELER= atof(reply->element[0]->str);             freeReplyObject(reply);}
-    if(!rv && !(rv = s6_redis_get(c,&reply,"get raa")))     {mrostatus->RAA = atof(reply->element[0]->str);             freeReplyObject(reply);}
-    if(!rv && !(rv = s6_redis_get(c,&reply,"get dea")))     {mrostatus->DEA = atof(reply->element[0]->str);             freeReplyObject(reply);}
-    if(!rv && !(rv = s6_redis_get(c,&reply,"get onsource")))  {mrostatus->ONSOURCE = atol(reply->element[0]->str);      freeReplyObject(reply);}
-    if(!rv && !(rv = s6_redis_get(c,&reply,"get site")))    {s6_strcpy(mrostatus->SITE,reply->element[0]->str);         freeReplyObject(reply);}
-    if(!rv && !(rv = s6_redis_get(c,&reply,"get rx_code"))) {s6_strcpy(mrostatus->RX_CODE,reply->element[0]->str);      freeReplyObject(reply);}
-    if(!rv && !(rv = s6_redis_get(c,&reply,"get year_doy_UTC")))  {s6_strcpy(mrostatus->YEAR_DOY_UTC,reply->element[0]->str);     freeReplyObject(reply);}
-    if(!rv && !(rv = s6_redis_get(c,&reply,"get year")))    {mrostatus->YEAR = atol(reply->element[0]->str);            freeReplyObject(reply);}
-    if(!rv && !(rv = s6_redis_get(c,&reply,"get doy_UTC"))) {mrostatus->DOY_UTC = atol(reply->element[0]->str);         freeReplyObject(reply);}
-    if(!rv && !(rv = s6_redis_get(c,&reply,"get UTC")))     {mrostatus->UTC = atol(reply->element[0]->str);             freeReplyObject(reply);}
-    if(!rv && !(rv = s6_redis_get(c,&reply,"get lo_freq"))) {mrostatus->LO_FREQ = atof(reply->element[0]->str);         freeReplyObject(reply);}
-    if(!rv && !(rv = s6_redis_get(c,&reply,"get tsys")))    {mrostatus->TSYS = atof(reply->element[0]->str);            freeReplyObject(reply);}
-    if(!rv && !(rv = s6_redis_get(c,&reply,"get xc")))      {mrostatus->XC = atof(reply->element[0]->str);              freeReplyObject(reply);}
-    if(!rv && !(rv = s6_redis_get(c,&reply,"get yc")))      {mrostatus->YC = atof(reply->element[0]->str);              freeReplyObject(reply);}
-    if(!rv && !(rv = s6_redis_get(c,&reply,"get z1c")))     {mrostatus->Z1C = atof(reply->element[0]->str);             freeReplyObject(reply);}
-    if(!rv && !(rv = s6_redis_get(c,&reply,"get z2c")))     {mrostatus->Z2C = atof(reply->element[0]->str);             freeReplyObject(reply);}
-    if(!rv && !(rv = s6_redis_get(c,&reply,"get z3c")))     {mrostatus->Z3C = atof(reply->element[0]->str);             freeReplyObject(reply);}
-    if(!rv && !(rv = s6_redis_get(c,&reply,"get xa")))      {mrostatus->XA = atof(reply->element[0]->str);              freeReplyObject(reply);}
-    if(!rv && !(rv = s6_redis_get(c,&reply,"get ya")))      {mrostatus->YA = atof(reply->element[0]->str);              freeReplyObject(reply);}
-    if(!rv && !(rv = s6_redis_get(c,&reply,"get z1a")))     {mrostatus->Z1A = atof(reply->element[0]->str);             freeReplyObject(reply);}
-    if(!rv && !(rv = s6_redis_get(c,&reply,"get z2a")))     {mrostatus->Z2A = atof(reply->element[0]->str);             freeReplyObject(reply);}
-    if(!rv && !(rv = s6_redis_get(c,&reply,"get z3a")))     {mrostatus->Z3A = atof(reply->element[0]->str);             freeReplyObject(reply);}
-    if(!rv && !(rv = s6_redis_get(c,&reply,"get submode"))) {mrostatus->SUBMODE = atol(reply->element[0]->str);         freeReplyObject(reply);}
-    if(!rv && !(rv = s6_redis_get(c,&reply,"get rx_sub")))  {s6_strcpy(mrostatus->RX_SUB,reply->element[0]->str);       freeReplyObject(reply);}
-    if(!rv && !(rv = s6_redis_get(c,&reply,"get scu_status"))) {mrostatus->SCU_STATUS=atol(reply->element[0]->str);     freeReplyObject(reply);}
+	if(!rv && !(rv = s6_redis_get(c,&reply,"get source")))  {s6_strcpy(mrostatus->SOURCE,reply->str);       freeReplyObject(reply);}
+    if(!rv && !(rv = s6_redis_get(c,&reply,"get sra")))     {s6_strcpy(mrostatus->SRA,reply->str);          freeReplyObject(reply);}
+    if(!rv && !(rv = s6_redis_get(c,&reply,"get sdec")))    {s6_strcpy(mrostatus->SDEC,reply->str);         freeReplyObject(reply);}
+    if(!rv && !(rv = s6_redis_get(c,&reply,"get rac")))     {s6_strcpy(mrostatus->RAC,reply->str);          freeReplyObject(reply);}
+    if(!rv && !(rv = s6_redis_get(c,&reply,"get dec")))     {s6_strcpy(mrostatus->DEC,reply->str);          freeReplyObject(reply);}
+    if(!rv && !(rv = s6_redis_get(c,&reply,"get raer")))    {s6_strcpy(mrostatus->RAER,reply->str);         freeReplyObject(reply);}
+    if(!rv && !(rv = s6_redis_get(c,&reply,"get decer")))   {s6_strcpy(mrostatus->DECER,reply->str);        freeReplyObject(reply);}
+    if(!rv && !(rv = s6_redis_get(c,&reply,"get azc")))     {mrostatus->AZC = atof(reply->str);             freeReplyObject(reply);}
+    if(!rv && !(rv = s6_redis_get(c,&reply,"get elc")))     {mrostatus->ELC = atof(reply->str);             freeReplyObject(reply);}
+    if(!rv && !(rv = s6_redis_get(c,&reply,"get aza")))     {mrostatus->AZA = atof(reply->str);             freeReplyObject(reply);}
+    if(!rv && !(rv = s6_redis_get(c,&reply,"get ela")))     {mrostatus->ELA = atof(reply->str);             freeReplyObject(reply);}
+    if(!rv && !(rv = s6_redis_get(c,&reply,"get azer")))    {mrostatus->AZER= atof(reply->str);             freeReplyObject(reply);}
+    if(!rv && !(rv = s6_redis_get(c,&reply,"get eler")))    {mrostatus->ELER= atof(reply->str);             freeReplyObject(reply);}
+    if(!rv && !(rv = s6_redis_get(c,&reply,"get raa")))     {mrostatus->RAA = atof(reply->str);             freeReplyObject(reply);}
+    if(!rv && !(rv = s6_redis_get(c,&reply,"get dea")))     {mrostatus->DEA = atof(reply->str);             freeReplyObject(reply);}
+    if(!rv && !(rv = s6_redis_get(c,&reply,"get onsource")))  {mrostatus->ONSOURCE = atol(reply->str);      freeReplyObject(reply);}
+    if(!rv && !(rv = s6_redis_get(c,&reply,"get site")))    {s6_strcpy(mrostatus->SITE,reply->str);         freeReplyObject(reply);}
+    if(!rv && !(rv = s6_redis_get(c,&reply,"get rx_code"))) {s6_strcpy(mrostatus->RX_CODE,reply->str);      freeReplyObject(reply);}
+    if(!rv && !(rv = s6_redis_get(c,&reply,"get year_doy_UTC")))  {s6_strcpy(mrostatus->YEAR_DOY_UTC,reply->str);     freeReplyObject(reply);}
+    if(!rv && !(rv = s6_redis_get(c,&reply,"get year")))    {mrostatus->YEAR = atol(reply->str);            freeReplyObject(reply);}
+    if(!rv && !(rv = s6_redis_get(c,&reply,"get doy")))     {mrostatus->DOY_UTC = atol(reply->str);         freeReplyObject(reply);}
+    if(!rv && !(rv = s6_redis_get(c,&reply,"get UTC")))     {mrostatus->UTC = atol(reply->str);             freeReplyObject(reply);}
+    if(!rv && !(rv = s6_redis_get(c,&reply,"get lo_freq"))) {mrostatus->LO_FREQ = atof(reply->str);         freeReplyObject(reply);}
+    if(!rv && !(rv = s6_redis_get(c,&reply,"get tsys")))    {mrostatus->TSYS = atof(reply->str);            freeReplyObject(reply);}
+    if(!rv && !(rv = s6_redis_get(c,&reply,"get xc")))      {mrostatus->XC = atof(reply->str);              freeReplyObject(reply);}
+    if(!rv && !(rv = s6_redis_get(c,&reply,"get yc")))      {mrostatus->YC = atof(reply->str);              freeReplyObject(reply);}
+    if(!rv && !(rv = s6_redis_get(c,&reply,"get z1c")))     {mrostatus->Z1C = atof(reply->str);             freeReplyObject(reply);}
+    if(!rv && !(rv = s6_redis_get(c,&reply,"get z2c")))     {mrostatus->Z2C = atof(reply->str);             freeReplyObject(reply);}
+    if(!rv && !(rv = s6_redis_get(c,&reply,"get z3c")))     {mrostatus->Z3C = atof(reply->str);             freeReplyObject(reply);}
+    if(!rv && !(rv = s6_redis_get(c,&reply,"get xa")))      {mrostatus->XA = atof(reply->str);              freeReplyObject(reply);}
+    if(!rv && !(rv = s6_redis_get(c,&reply,"get ya")))      {mrostatus->YA = atof(reply->str);              freeReplyObject(reply);}
+    if(!rv && !(rv = s6_redis_get(c,&reply,"get z1a")))     {mrostatus->Z1A = atof(reply->str);             freeReplyObject(reply);}
+    if(!rv && !(rv = s6_redis_get(c,&reply,"get z2a")))     {mrostatus->Z2A = atof(reply->str);             freeReplyObject(reply);}
+    if(!rv && !(rv = s6_redis_get(c,&reply,"get z3a")))     {mrostatus->Z3A = atof(reply->str);             freeReplyObject(reply);}
+    if(!rv && !(rv = s6_redis_get(c,&reply,"get submode"))) {mrostatus->SUBMODE = atol(reply->str);         freeReplyObject(reply);}
+    if(!rv && !(rv = s6_redis_get(c,&reply,"get rx_sub")))  {s6_strcpy(mrostatus->RX_SUB,reply->str);       freeReplyObject(reply);}
+    if(!rv && !(rv = s6_redis_get(c,&reply,"get scu_status"))) {mrostatus->SCU_STATUS=atol(reply->str);     freeReplyObject(reply);}
 
     if(c) redisFree(c);       // TODO do I really want to free each time?
-    if(c_observatory) redisFree(c_observatory);       // TODO do I really want to free each time?
 
     return rv;         
 }

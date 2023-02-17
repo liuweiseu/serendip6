@@ -9,12 +9,8 @@ PATH="$(dirname $0):${PATH}"
 hostname=`hostname -s`
 #net_thread=${1:-s6_pktsock_thread}
 net_thread="s6_pktsock_thread"
-#beam=$1
-#beam=$1
-beam=2
+beam=0
 
-#iface_pol0=`myinterface.sh voltpol0`
-#iface_pol1=`myinterface.sh voltpol1`
 iface_pol0="enp3s0"
 iface_pol1="enp3s0d1"
 
@@ -42,8 +38,8 @@ instances=(
   #
   # hashpipe command line parameters (serendip6 will run as hashpipe instances 1 and 2):
   " place holder for unused instance 0.  fastburst uses instance 0"
-  "--physcpubind=16,17,18   --membind=0 ${iface_pol0} 0   16 17 18  ${beam} 0  $log_timestamp" # Instance 1
-  "--physcpubind=24,25,26 --membind=1 ${iface_pol1} 1  24 25 26  ${beam} 1  $log_timestamp" # Instance 2
+  "--physcpubind=7,9,11   --membind=0,1 ${iface_pol0} 1   7  9 11  ${beam} 0  $log_timestamp" # Instance 1
+  "--physcpubind=15,17,19 --membind=0,1 ${iface_pol1} 1  15 17 19  ${beam} 1  $log_timestamp" # Instance 2
 )
 
 function init() {
@@ -73,15 +69,6 @@ function init() {
 
   if [ $net_thread == 's6_pktsock_thread' ]
   then
-    # AO
-    #bindhost="eth$((2+2*instance))"
-    # GBT
-    # FAST
-    #bindhost="p2p$((3+instance))"
-    #bindhost="p2p$((2+instance))"
-    #bindhost="p2p1"
-    #bindhost="p2p$((4-instance))"
-    #bindhost="eth$((3+2*instance))"
     echo "binding $net_thread to $bindhost"
   fi
 
@@ -91,7 +78,7 @@ function init() {
     -o VERS6GW=$VERS6GW                \
     -o RUNALWYS=1                      \
     -o MAXHITS=2048                    \
-	  -o POWTHRSH=40					   \
+	-o POWTHRSH=40					   \
     -o BINDHOST=$bindhost              \
     -o BINDPORT=12345                  \
     -o GPUDEV=$gpudev                  \
@@ -107,7 +94,7 @@ function init() {
     -o VERS6GW=$VERS6GW                \
     -o RUNALWYS=1                      \
     -o MAXHITS=2048                    \
-	  -o POWTHRSH=40					   \
+	-o POWTHRSH=40					   \
     -o BINDHOST=$bindhost              \
     -o BINDPORT=12345                  \
     -o GPUDEV=$gpudev                  \

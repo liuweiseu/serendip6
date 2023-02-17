@@ -890,7 +890,7 @@ static int init(hashpipe_thread_args_t *args)
 
 	// join the associate socket to the multicast group
 	// IP_ADD_MEMBERSHIP causes IGMP group membership report to be sent
-fprintf(stderr, "joining...\n");
+    fprintf(stdout, "joining...\n");
     printf("%s\r\n",s6_group);
     mreq.imr_multiaddr.s_addr = inet_addr(s6_group);	         
     mreq.imr_interface.s_addr = inet_addr(bindhost_addr); 

@@ -8,7 +8,7 @@ extern "C" {
 // In production environments REDISHOST is often set to "redishost" 
 // (resolved via name resolution).  In test environments REDISHOST 
 // is often set to "localhost". 
-#define REDISHOST ("redishost")
+//#define REDISHOST ("redishost")
 //#define REDISHOST ("localhost")
 
 #ifdef __cplusplus

@@ -739,7 +739,7 @@ int write_integration_header_mro(etfits_t * etf, mrostatus_t *mrostatus_p) {
     if(! *status_p) fits_update_key(etf->fptr, TLONG,   "ONSOURCE",     &mrostatus_p->ONSOURCE,         NULL, status_p); 
     if(! *status_p) fits_update_key(etf->fptr, TSTRING, "SITE",         &mrostatus_p->SITE,             NULL, status_p); 
     if(! *status_p) fits_update_key(etf->fptr, TSTRING, "RX_CODE",      &mrostatus_p->RX_CODE,          NULL, status_p); 
-    if(! *status_p) fits_update_key(etf->fptr, TSTRING, "YEAR_DOY_UTC", &mrostatus_p->YEAR_DOY_UTC,     NULL, status_p); 
+    if(! *status_p) fits_update_key(etf->fptr, TSTRING, "YEAR_DOY",     &mrostatus_p->YEAR_DOY_UTC,     NULL, status_p); 
     if(! *status_p) fits_update_key(etf->fptr, TLONG,   "YEAR",         &mrostatus_p->YEAR,             NULL, status_p); 
     if(! *status_p) fits_update_key(etf->fptr, TLONG,   "DOY_UTC",      &mrostatus_p->DOY_UTC,          NULL, status_p);
     if(! *status_p) fits_update_key(etf->fptr, TLONG,   "UTC",          &mrostatus_p->UTC,              NULL, status_p);  
@@ -757,7 +757,7 @@ int write_integration_header_mro(etfits_t * etf, mrostatus_t *mrostatus_p) {
     if(! *status_p) fits_update_key(etf->fptr, TDOUBLE, "Z3A",          &mrostatus_p->Z3A,              NULL, status_p);
     if(! *status_p) fits_update_key(etf->fptr, TLONG,   "SUBMODE",      &mrostatus_p->SUBMODE,          NULL, status_p);
     if(! *status_p) fits_update_key(etf->fptr, TSTRING, "RX_SUB",       &mrostatus_p->RX_SUB,           NULL, status_p);
-    if(! *status_p) fits_update_key(etf->fptr, TLONG,   "SCU_STATUS",   &mrostatus_p->SCU_STATUS,           NULL, status_p);
+    if(! *status_p) fits_update_key(etf->fptr, TLONG,   "SCU_STAT",     &mrostatus_p->SCU_STATUS,           NULL, status_p);
 
     if (*status_p) {
         hashpipe_error(__FUNCTION__, "Error writing integration header");
