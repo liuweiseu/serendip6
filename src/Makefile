@@ -84,6 +84,10 @@ S6_MRO_LIB_SOURCES  = s6_databuf.cpp \
 S6_MRO_LIB_INCLUDES = s6_etfits.h \
 		  s6_databuf.h
 
+S6_SCRIPT_TARGET_MRO = s6_init_mro.sh \
+					 ../scripts/s6_restart_mro.sh \
+					 ../scripts/s6_stop_mro.sh
+
 S6OBS_AO_PROG_TARGET   = s6_observatory_ao
 S6OBS_AO_PROG_SOURCES  = s6_observatory_ao.c \
 		      s6_obsaux_ao.c \
@@ -159,6 +163,21 @@ install-script: $(S6_SCRIPT_TARGET)
 	install -p $^ "$(DESTDIR)$(BINDIR)"
 
 install: install-etc install-lib install-bin install-script
+
+# install lib, scripts...for SETI at MRO
+install-etc-mro: s6_ETFITS_mro_template.txt
+	mkdir -p "$(DESTDIR)$(ETCDIR)"
+	install -p $^ "$(DESTDIR)$(ETCDIR)"
+
+install-lib-mro: $(S6GPU_LIB_TARGET) $(S6_MRO_LIB_TARGET)
+	mkdir -p "$(DESTDIR)$(LIBDIR)"
+	install -p $^ "$(DESTDIR)$(LIBDIR)"
+
+install-script-mro: $(S6_SCRIPT_TARGET_MRO)
+	mkdir -p "$(DESTDIR)$(BINDIR)"
+	install -p $^ "$(DESTDIR)$(BINDIR)"
+
+install-mro: install-etc-mro install-lib-mro install-script-mro
 
 .PHONY: all tags clean install install-lib install-etc install-bin
 # vi: set ts=8 noet :
