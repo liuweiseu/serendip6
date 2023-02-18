@@ -58,8 +58,7 @@ EXTNAME = 'MROSTATUS'           / name of this binary table extension
 NMATRIX =                    1  / 1 dataset per row
 #
 COARCHID=                    *  / coarse channel ID
-TIME    =                    *  / unix time, decimal seconds
-RECEIVER=                    *		
+TIME    =                    *  / unix time, decimal seconds		
 SOURCE  =                    *
 ONSOURCE=                    *
 SITE    =                    *
