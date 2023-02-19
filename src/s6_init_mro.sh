@@ -10,8 +10,10 @@ hostname=`hostname -s`
 net_thread="s6_pktsock_thread"
 beam=0
 
-iface_pol0="enp216s0f1"
-iface_pol1="enp216s0f0"
+#iface_pol0="enp216s0f1"
+#iface_pol1="enp216s0f0"
+iface_pol0=$1
+iface_pol1=$2
 
 # Remove old semaphore
 echo removing old semaphore, if any
