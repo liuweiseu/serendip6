@@ -15,7 +15,7 @@ if [ ! ${POL0E} ]; then
 fi
 
 if [ ! ${POL1E} ]; then 
-    POL0E="enp216s0f1"
+    POL1E="enp216s0f1"
 fi
 
 if [ ! ${DATA_DIR} ]; then 
