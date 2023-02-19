@@ -90,7 +90,7 @@
 #define ACQUIRE_METADATA	          1
 
 #elif SOURCE_MRO
-#define REDISHOST                   "172.17.0.2"
+#define REDISHOST                   "localhost"
 // non-channelized real input
 #define N_POLS_PER_BEAM             1
 #define N_POLS_PER_BEAM_TOTAL       2
