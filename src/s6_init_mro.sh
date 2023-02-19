@@ -81,8 +81,8 @@ function init() {
     -o BINDHOST=$bindhost              \
     -o BINDPORT=12345                  \
     -o GPUDEV=$gpudev                  \
-    -o FASTBEAM=$beam                  \
-    -o FASTPOL=$pol                    \
+    -o MROBEAM=$beam                  \
+    -o MROPOL=$pol                    \
     -c $netcpu $net_thread             \
     -c $gpucpu s6_gpu_thread           \
     -c $outcpu s6_output_thread    
@@ -97,8 +97,8 @@ function init() {
     -o BINDHOST=$bindhost              \
     -o BINDPORT=12345                  \
     -o GPUDEV=$gpudev                  \
-    -o FASTBEAM=$beam                  \
-    -o FASTPOL=$pol                    \
+    -o MROBEAM=$beam                  \
+    -o MROPOL=$pol                    \
     -c $netcpu $net_thread             \
     -c $gpucpu s6_gpu_thread           \
     -c $outcpu s6_output_thread        \
