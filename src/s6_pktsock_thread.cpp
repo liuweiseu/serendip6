@@ -801,7 +801,7 @@ static int init(hashpipe_thread_args_t *args)
         hashpipe_error("s6_pktsock_thread", "Error opening pktsock.");
         pthread_exit(NULL);
     } else {
-        hashpipe_error("s6_pktsock_thread", "pktsock %d bound to %s.", p_ps->fd, bindhost);
+        hashpipe_info("s6_pktsock_thread", "pktsock %d bound to %s.", p_ps->fd, bindhost);
     }
 
 #define REUSE_PKT_SOCK
@@ -890,15 +890,16 @@ static int init(hashpipe_thread_args_t *args)
 
 	// join the associate socket to the multicast group
 	// IP_ADD_MEMBERSHIP causes IGMP group membership report to be sent
-    fprintf(stdout, "joining...\n");
-    printf("%s\r\n",s6_group);
+    //fprintf(stdout, "joining...\n");
+    //printf("%s\r\n",s6_group);
+    hashpipe_info("s6_pktsock_thread", "joining...%s", s6_group);
     mreq.imr_multiaddr.s_addr = inet_addr(s6_group);	         
     mreq.imr_interface.s_addr = inet_addr(bindhost_addr); 
     if (setsockopt(sock, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq, sizeof(mreq)) < 0) {	
         hashpipe_error("s6_pktsock_thread", "Error joining multicast group.");
         pthread_exit(NULL);
 	} else {
-	hashpipe_error("s6_pktsock_thread", "Joining %s to multicast group %s.", bindhost_addr, s6_group);
+	    hashpipe_info("s6_pktsock_thread", "Joining %s to multicast group %s.", bindhost_addr, s6_group);
 	}
 #endif  // end JOIN_MULTICAST
 

@@ -36,8 +36,8 @@ instances=(
   #
   # hashpipe command line parameters (serendip6 will run as hashpipe instances 1 and 2):
   " place holder for unused instance 0.  fastburst uses instance 0"
-  "--physcpubind=10,11,12   --membind=0,1 ${iface_pol0} 0   10  11 12  ${beam} 0  $log_timestamp" # Instance 1
-  "--physcpubind=24,25,26 --membind=0,1 ${iface_pol1} 1  24 25 26  ${beam} 1  $log_timestamp" # Instance 2
+  "--physcpubind=10,11,12   --membind=0 ${iface_pol0} 0   10  11 12  ${beam} 0  $log_timestamp" # Instance 1
+  "--physcpubind=24,25,26 --membind=0 ${iface_pol1} 1  24 25 26  ${beam} 1  $log_timestamp" # Instance 2
 )
 
 function init() {
@@ -87,7 +87,7 @@ function init() {
     -c $outcpu s6_output_thread    
 
   numactl $numaops $membind            \
-  /usr/local/bin/hashpipe_lab -p serendip6 -I $instance   \
+  hashpipe -p serendip6_lab -I $instance   \
     -o VERS6SW=$VERS6SW                \
     -o VERS6GW=$VERS6GW                \
     -o RUNALWYS=1                      \
