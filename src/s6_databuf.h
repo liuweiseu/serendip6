@@ -20,6 +20,13 @@
 //#define N_POLS_PER_BEAM         2
 //#define N_BYTES_PER_SAMPLE      2
 
+// This is used for testing serendip6 in the lab
+#ifdef LAB_TEST
+#define MRO_SAMPLES               256
+#else
+#define MRO_SAMPLES               1024
+#endif
+
 #ifdef SOURCE_S6
 // channelized complex input
 #define N_POLS_PER_BEAM             2
@@ -98,7 +105,7 @@
 #define N_BEAMS                     1
 #define N_BEAM_SLOTS                1
 #define N_COARSE_CHAN               1           
-#define N_TIME_SAMPLES              ((uint64_t) 1024*1024*1024)                            
+#define N_TIME_SAMPLES              ((uint64_t) MRO_SAMPLES*1024*1024)                            
 #define N_FINE_CHAN 		            (N_TIME_SAMPLES/2)                            
 #define N_SPECTRA_PER_PACKET        4096
 #define N_SUBSPECTRA_PER_SPECTRUM   1

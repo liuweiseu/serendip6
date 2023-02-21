@@ -7,24 +7,18 @@ VERS6GW=0.1.0                   \
 PATH="$(dirname $0):${PATH}"
 
 hostname=`hostname -s`
-#net_thread=${1:-s6_pktsock_thread}
 net_thread="s6_pktsock_thread"
-#beam=$1
-#beam=$1
-beam=2
+beam=0
 
-#iface_pol0=`myinterface.sh voltpol0`
-#iface_pol1=`myinterface.sh voltpol1`
-iface_pol0="enp3s0"
-iface_pol1="enp3s0d1"
+iface_pol0=$1
+iface_pol1=$2
 
 # Remove old semaphore
 echo removing old semaphore, if any
 rm /dev/shm/sem.serendip6_gpu_sem_device_*
 
-# Setup parameters for two instances.
-instance_i=("1" "2")
-#instance_i=("1")
+# Setup parameters for one instance for lab test.
+instance_i=("1")
 log_timestamp=`date +%Y%m%d_%H%M%S`
 instances=(
   # NOTE: when changing any of the following it is good practice to run:
@@ -42,8 +36,8 @@ instances=(
   #
   # hashpipe command line parameters (serendip6 will run as hashpipe instances 1 and 2):
   " place holder for unused instance 0.  fastburst uses instance 0"
-  "--physcpubind=16,17,18   --membind=0 ${iface_pol0} 0   16 17 18  ${beam} 0  $log_timestamp" # Instance 1
-  "--physcpubind=24,25,26 --membind=1 ${iface_pol1} 1  24 25 26  ${beam} 1  $log_timestamp" # Instance 2
+  "--physcpubind=10,11,12   --membind=0,1 ${iface_pol0} 0   10  11 12  ${beam} 0  $log_timestamp" # Instance 1
+  "--physcpubind=24,25,26 --membind=0,1 ${iface_pol1} 1  24 25 26  ${beam} 1  $log_timestamp" # Instance 2
 )
 
 function init() {
@@ -73,15 +67,6 @@ function init() {
 
   if [ $net_thread == 's6_pktsock_thread' ]
   then
-    # AO
-    #bindhost="eth$((2+2*instance))"
-    # GBT
-    # FAST
-    #bindhost="p2p$((3+instance))"
-    #bindhost="p2p$((2+instance))"
-    #bindhost="p2p1"
-    #bindhost="p2p$((4-instance))"
-    #bindhost="eth$((3+2*instance))"
     echo "binding $net_thread to $bindhost"
   fi
 
@@ -91,12 +76,12 @@ function init() {
     -o VERS6GW=$VERS6GW                \
     -o RUNALWYS=1                      \
     -o MAXHITS=2048                    \
-	  -o POWTHRSH=40					   \
+	-o POWTHRSH=40					   \
     -o BINDHOST=$bindhost              \
     -o BINDPORT=12345                  \
     -o GPUDEV=$gpudev                  \
-    -o FASTBEAM=$beam                  \
-    -o FASTPOL=$pol                    \
+    -o MROBEAM=$beam                  \
+    -o MROPOL=$pol                    \
     -c $netcpu $net_thread             \
     -c $gpucpu s6_gpu_thread           \
     -c $outcpu s6_output_thread    
@@ -107,12 +92,12 @@ function init() {
     -o VERS6GW=$VERS6GW                \
     -o RUNALWYS=1                      \
     -o MAXHITS=2048                    \
-	  -o POWTHRSH=40					   \
+	-o POWTHRSH=40					   \
     -o BINDHOST=$bindhost              \
     -o BINDPORT=12345                  \
     -o GPUDEV=$gpudev                  \
-    -o FASTBEAM=$beam                  \
-    -o FASTPOL=$pol                    \
+    -o MROBEAM=$beam                  \
+    -o MROPOL=$pol                    \
     -c $netcpu $net_thread             \
     -c $gpucpu s6_gpu_thread           \
     -c $outcpu s6_output_thread        \

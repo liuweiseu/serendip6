@@ -8,4 +8,6 @@ else if($1 == "fast") then
 make clean ; make all_fast S6_LOCATION="-D SOURCE_FAST"
 else if($1 == "mro") then
 make clean ; make all_mro S6_LOCATION="-D SOURCE_MRO"
+else if($1 == "lab") then
+make clean ; make all_mro S6_LOCATION="-D SOURCE_MRO -D LAB_TEST"
 endif
