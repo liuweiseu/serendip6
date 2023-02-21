@@ -71,7 +71,7 @@ function init() {
   fi
 
   echo numactl $numaops $membind       \
-  hashpipe -p serendip6 -I $instance   \
+  hashpipe -p serendip6_lab -I $instance   \
     -o VERS6SW=$VERS6SW                \
     -o VERS6GW=$VERS6GW                \
     -o RUNALWYS=1                      \
@@ -87,12 +87,12 @@ function init() {
     -c $outcpu s6_output_thread    
 
   numactl $numaops $membind            \
-  /usr/local/bin/hashpipe -p serendip6 -I $instance   \
+  /usr/local/bin/hashpipe_lab -p serendip6 -I $instance   \
     -o VERS6SW=$VERS6SW                \
     -o VERS6GW=$VERS6GW                \
     -o RUNALWYS=1                      \
     -o MAXHITS=2048                    \
-	-o POWTHRSH=40					   \
+	  -o POWTHRSH=40					           \
     -o BINDHOST=$bindhost              \
     -o BINDPORT=12345                  \
     -o GPUDEV=$gpudev                  \

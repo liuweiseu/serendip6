@@ -1,0 +1,91 @@
+NVCC        = nvcc
+NVCCFLAGS   = -O3 --compiler-options '-fPIC' --shared -Xcompiler -Wall -arch=sm_35 -lrt -lcudart -lcufft -lineinfo -std=c++14
+CC          = gcc
+
+S6_LOCATION = 
+
+S6_LAB_LIB_CCFLAGS = -g -fPIC -shared -lstdc++ \
+		     -I. -I$(CUDA_DIR)/include -I$(CUDA_DIR)/targets/x86_64-linux/include -I/usr/local/include -I. -I/usr/local/cfitsio/include\
+		     -L. -L/usr/local/lib -L/usr/lib64 -L/usr/local/lib/hiredis -L/usr/local/cfitsio/lib\
+		     -lhashpipe -lS6GPU -lrt -lhiredis -lcfitsio -lm -std=c++14
+
+S6GPUTEST_CCFLAGS  = -g \
+		     -I. -I/usr/local/cuda/include \
+		     -L. -L/usr/local/cuda/lib64 \
+			 -L/usr/local/cfitsio/lib \
+		     -lcudart -lrt -lcufft -lS6GPU  \
+		     -lcfitsio serendip6.so
+S6EXTRACT_PROG_CCFLAGS  = -g -lstdc++ \
+		     -I. -I/usr/local/cuda/include
+S6_CHAN2IF_CCFLAGS = -g -lstdc++ -lm
+
+S6GPU_LIB_TARGET    = libS6GPU.so
+S6GPU_LIB_SOURCES   = s6GPU.cu
+S6GPU_LIB_INCLUDES  = s6GPU.h \
+		      stopwatch.hpp
+
+S6EXTRACT_PROG_TARGET   = s6_extract_coarse_chan
+S6EXTRACT_PROG_SOURCES  = s6_extract_coarse_chan.cpp
+S6EXTRACT_PROG_INCLUDES = s6_databuf.h
+
+S6_LAB_LIB_TARGET   = serendip6_lab.so
+S6_MRO_LIB_SOURCES  = s6_databuf.cpp \
+		  s6_pktsock_thread.cpp \
+		  s6_gen_fake_data.cpp \
+		  s6_fake_net_thread.cpp \
+		  s6_gpu_thread.cpp \
+		  s6_output_thread.cpp \
+		  s6_obs_data.cpp \
+		  s6_obs_data_gbt.cpp \
+		  s6_obs_data_mro.cpp \
+		  s6_etfits.cpp \
+		  s6_time.c
+S6_LAB_LIB_INCLUDES = s6_etfits.h \
+		  s6_databuf.h
+
+S6_SCRIPT_TARGET_LAB = s6_init_lab.sh \
+					 ../scripts/s6_restart_lab.sh \
+					 ../scripts/s6_stop_lab.sh
+
+
+all_lab: $(S6GPU_LIB_TARGET) $(S6_LAB_LIB_TARGET) $(S6GPUTEST_PROG_TARGET) $(S6EXTRACT_PROG_TARGET)
+
+
+$(S6GPU_LIB_TARGET):      $(S6GPU_LIB_SOURCES) $(S6GPU_LIB_INCLUDES) ;
+	$(NVCC) -o $(S6GPU_LIB_TARGET) $(S6GPU_LIB_SOURCES) $(NVCCFLAGS) $(S6_LOCATION) 
+
+$(S6_LAB_LIB_TARGET):         $(S6_MRO_LIB_SOURCES) $(S6_LAB_LIB_INCLUDES) ;
+	$(CC)   -o $(S6_LAB_LIB_TARGET) $(S6_MRO_LIB_SOURCES) $(S6_LAB_LIB_CCFLAGS) $(S6_LOCATION)
+
+$(S6GPUTEST_PROG_TARGET): $(S6GPUTEST_PROG_SOURCES) $(S6GPUTEST_PROG_INCLUDES) ; 
+	$(CC)   -o $(S6GPUTEST_PROG_TARGET) $(S6GPUTEST_PROG_SOURCES) $(S6GPUTEST_CCFLAGS) $(S6_LOCATION) 
+
+$(S6EXTRACT_PROG_TARGET): $(S6EXTRACT_PROG_SOURCES) $(S6EXTRACT_PROG_INCLUDES) ; 
+	$(CC)   -o $(S6EXTRACT_PROG_TARGET) $(S6EXTRACT_PROG_SOURCES) $(S6EXTRACT_PROG_CCFLAGS) $(S6_LOCATION)
+
+tags:
+	ctags -R .
+
+clean: ; rm -f $(S6GPU_LIB_TARGET)  $(S6GPUTEST_PROG_TARGET) $(S6EXTRACT_PROG_TARGET) $(S6_LAB_LIB_TARGET) tags
+
+prefix=/usr/local
+ETCDIR=$(prefix)/etc
+LIBDIR=$(prefix)/lib
+BINDIR=$(prefix)/bin
+
+# install lib, scripts...for testing SETI in the lab 
+install-etc-lab: s6_ETFITS_mro_template.txt
+	mkdir -p "$(DESTDIR)$(ETCDIR)"
+	install -p $^ "$(DESTDIR)$(ETCDIR)"
+
+install-lib-lab: $(S6GPU_LIB_TARGET) $(S6_LAB_LIB_TARGET)
+	mkdir -p "$(DESTDIR)$(LIBDIR)"
+	install -p $^ "$(DESTDIR)$(LIBDIR)"
+
+install-script-lab: $(S6_SCRIPT_TARGET_LAB)
+	mkdir -p "$(DESTDIR)$(BINDIR)"
+	install -p $^ "$(DESTDIR)$(BINDIR)"
+
+install-lab: install-etc-lab install-lib-lab install-script-lab
+
+.PHONY: all tags clean install-lab install-lib-lab install-etc-lab install-bin-lab

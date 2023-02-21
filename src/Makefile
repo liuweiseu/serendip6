@@ -88,10 +88,6 @@ S6_SCRIPT_TARGET_MRO = s6_init_mro.sh \
 					 ../scripts/s6_restart_mro.sh \
 					 ../scripts/s6_stop_mro.sh
 
-S6_SCRIPT_TARGET_LAB = s6_init_lab.sh \
-					 ../scripts/s6_restart_lab.sh \
-					 ../scripts/s6_stop_lab.sh
-
 S6OBS_AO_PROG_TARGET   = s6_observatory_ao
 S6OBS_AO_PROG_SOURCES  = s6_observatory_ao.c \
 		      s6_obsaux_ao.c \
@@ -143,7 +139,7 @@ $(S6_CHAN2IF_TARGET): $(S6_CHAN2IF_SOURCES) $(S6_CHAN2IF_INCLUDES) ;            
 tags:
 	ctags -R .
 
-clean: ; rm -f $(S6GPU_LIB_TARGET) $(S6_FAST_LIB_TARGET) $(S6OBS_AO_PROG_TARGET) $(S6OBS_GBT_PROG_TARGET) $(S6GPUTEST_PROG_TARGET) $(S6EXTRACT_PROG_TARGET) tags
+clean: ; rm -f $(S6GPU_LIB_TARGET) $(S6_FAST_LIB_TARGET) $(S6OBS_AO_PROG_TARGET) $(S6OBS_GBT_PROG_TARGET) $(S6GPUTEST_PROG_TARGET) $(S6EXTRACT_PROG_TARGET) $(S6_MRO_LIB_TARGET) tags
 
 prefix=/usr/local
 ETCDIR=$(prefix)/etc
@@ -181,14 +177,7 @@ install-script-mro: $(S6_SCRIPT_TARGET_MRO)
 	mkdir -p "$(DESTDIR)$(BINDIR)"
 	install -p $^ "$(DESTDIR)$(BINDIR)"
 
-install-script-lab: $(S6_SCRIPT_TARGET_LAB)
-	mkdir -p "$(DESTDIR)$(BINDIR)"
-	install -p $^ "$(DESTDIR)$(BINDIR)"
-
 install-mro: install-etc-mro install-lib-mro install-script-mro
-
-# We use MRO version for lab test
-install-lab: install-etc-mro install-lib-mro install-script-lab
 
 .PHONY: all tags clean install install-lib install-etc install-bin
 # vi: set ts=8 noet :

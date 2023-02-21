@@ -1,3 +1,3 @@
 #! /bin/bash
 
-pkill -9 -f "hashpipe -p serendip6"
+pkill -9 -f "hashpipe -p serendip6_lab"
