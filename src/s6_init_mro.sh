@@ -74,7 +74,7 @@ function init() {
   fi
 
   echo numactl $numaops $membind       \
-  hashpipe -p serendip6 -I $instance   \
+  hashpipe -p serendip6_mro -I $instance   \
     -o VERS6SW=$VERS6SW                \
     -o VERS6GW=$VERS6GW                \
     -o RUNALWYS=1                      \
@@ -90,7 +90,7 @@ function init() {
     -c $outcpu s6_output_thread    
 
   numactl $numaops $membind            \
-  /usr/local/bin/hashpipe -p serendip6 -I $instance   \
+  /usr/local/bin/hashpipe -p serendip6_mro -I $instance   \
     -o VERS6SW=$VERS6SW                \
     -o VERS6GW=$VERS6GW                \
     -o RUNALWYS=1                      \

@@ -69,7 +69,7 @@ S6_FAST_LIB_SOURCES  = s6_databuf.cpp \
 S6_FAST_LIB_INCLUDES = s6_etfits.h \
 		  s6_databuf.h
 
-S6_MRO_LIB_TARGET   = serendip6.so
+S6_MRO_LIB_TARGET   = serendip6_mro.so
 S6_MRO_LIB_SOURCES  = s6_databuf.cpp \
 		  s6_pktsock_thread.cpp \
 		  s6_gen_fake_data.cpp \
