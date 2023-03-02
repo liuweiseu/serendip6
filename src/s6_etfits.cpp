@@ -411,7 +411,7 @@ int etfits_create(etfits_t * etf) {
         etf->mode = 'w';
 
         // Create the output directory if needed
-        char datadir[1024];
+        char datadir[512];
         strncpy(datadir, etf->basefilename, 1023);
         char *last_slash = strrchr(datadir, '/');
         if (last_slash!=NULL && last_slash!=datadir) {
@@ -974,6 +974,7 @@ int write_hits_header(etfits_t * etf, int borspol, size_t nhits, size_t missed_p
         hashpipe_error(__FUNCTION__, "Error writing hits header");
         fits_report_error(stderr, *status_p);
     }
+    return 0;
 }
 
 //----------------------------------------------------------
