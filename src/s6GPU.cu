@@ -846,6 +846,7 @@ int spectroscopy(int n_cc,         		// N coarse chans
 #endif
 
 #if defined(SOURCE_FAST) || defined(SOURCE_MRO)   
+#if 0
 #ifdef REALLOC_CUB
 int spectroscopy(int n_cc, 				// N coarse chans
                  int n_fc,    			// N fine chans
