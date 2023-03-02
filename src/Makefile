@@ -1,5 +1,5 @@
 NVCC        = nvcc
-NVCCFLAGS   = -O3 --compiler-options '-fPIC' --shared -Xcompiler -Wall -arch=sm_35 -lrt -lcudart -lcufft -lineinfo -std=c++14
+NVCCFLAGS   = -O3 --compiler-options '-fPIC' --shared -Xcompiler -Wall -arch=sm_86 -lrt -lcudart -lcufft -lineinfo -std=c++14
 CC          = gcc
 # The user should specify, on the 'make' command line :
 # S6_LOCATION="-D SOURCE_DIBAS"
@@ -11,11 +11,11 @@ S6_LOCATION =
 S6_FAST_LIB_CCFLAGS     = -g -fPIC -shared -lstdc++ \
 		     -I. -I$(CUDA_DIR)/include -I$(CUDA_DIR)/targets/x86_64-linux/include -I/usr/local/include -I. -I/usr/local/cfitsio/include\
 		     -L. -L/usr/local/lib -L/usr/lib64 -L/usr/local/lib/hiredis -L/usr/local/cfitsio/lib\
-		     -lhashpipe -lS6GPU -lrt -lhiredis -lcfitsio -lm -std=c++14
+		     -lhashpipe -lS6GPU -lrt -lhiredis -lcfitsio -lm -std=c++11
 S6_MRO_LIB_CCFLAGS = -g -fPIC -shared -lstdc++ \
 		     -I. -I$(CUDA_DIR)/include -I$(CUDA_DIR)/targets/x86_64-linux/include -I/usr/local/include -I. -I/usr/local/cfitsio/include\
 		     -L. -L/usr/local/lib -L/usr/lib64 -L/usr/local/lib/hiredis -L/usr/local/cfitsio/lib\
-		     -lhashpipe -lS6GPU -lrt -lhiredis -lcfitsio -lm -std=c++14
+		     -lhashpipe -lS6GPU -lrt -lhiredis -lcfitsio -lm
 S6OBS_AO_PROG_CCFLAGS = -g -lstdc++ \
 		     -I/usr/include/tcl \
 		     -I/usr/local/include \
