@@ -455,6 +455,54 @@ inline void log_rms(s6_input_databuf_t *s6_input_databuf_p, block_info_t *binfo,
     //n_rms += 1;
 }
 
+int dump_voltages(s6_input_databuf_t *db) 
+{
+	char voltage_filename[256];
+	char hostname[64];
+	int fd, rv;
+       	struct rlimit rl;
+
+	// increase file size limit (TODO only needs to be done once per run)
+	rv = getrlimit(RLIMIT_FSIZE, &rl);
+	if(rv == -1) {
+		perror("getting file size limit");
+	}
+	rl.rlim_cur = 12884908288;		// TODO set to unlimited? 
+	rv = setrlimit(RLIMIT_FSIZE, &rl);
+	if(rv == -1) {
+		perror("setting file size limit");
+	}
+
+       	gethostname(hostname, sizeof(hostname));
+       	sprintf(voltage_filename, "/data/serendip6_data/voltage_%s_%ld_%lf", 
+		hostname, 
+		db->block[0].header.sid, 
+		double(time(NULL)/86400.0 + 2440587.5)-2400000.5
+	);  // TODO unix time to MJD should be done via a macro
+	hashpipe_info(__FUNCTION__, "dumping voltage to file %s (%ld bytes)", voltage_filename, sizeof(s6_input_databuf_t));
+
+	fd = open(voltage_filename, O_CREAT|O_RDWR|O_TRUNC, S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP);
+	if(fd == -1) {
+		perror("opening voltage file");
+	} else {
+		const char* db_ptr = (char *)db;
+		size_t written = write(fd, db_ptr, sizeof(s6_input_databuf_t)); 
+//fprintf(stderr, "first wrote %ld\n", written);
+    		while (written < sizeof(s6_input_databuf_t)) {
+//fprintf(stderr, "write\n");
+       			rv = write(fd, &(db_ptr[written]), sizeof(s6_input_databuf_t)-written);
+//fprintf(stderr, "wrote %ld\n", rv);
+			if(rv == -1) {
+				perror("writing voltage file");
+				pthread_exit(NULL);
+			} else {
+				written += rv;
+			}	
+		}
+		fprintf(stderr, "wrote %ld bytes to voltage file\n", written);
+	}
+	close(fd);
+}
 
 // This function returns -1 unless the given packet causes a block to be marked
 // as filled in which case this function returns the marked block's first mcnt.
@@ -520,6 +568,9 @@ static inline uint64_t process_packet(
 		clock_gettime(CLOCK_REALTIME, &time_spec);
 		s6_input_databuf_p->block[binfo.block_i].header.time_sec  = time_spec.tv_sec;
 		s6_input_databuf_p->block[binfo.block_i].header.time_nsec = time_spec.tv_nsec;
+//fprintf(stderr, "time_sec = %llu\n", s6_input_databuf_p->block[binfo.block_i].header.time_sec);
+//fprintf(stderr, "time_nsec = %llu\n", s6_input_databuf_p->block[binfo.block_i].header.time_nsec);
+//fprintf(stderr, "sid = %llu\n", s6_input_databuf_p->block[binfo.block_i].header.sid);
 
 #if 0
 	    for(i=0; i<N_BEAMS; i++) {
@@ -1102,44 +1153,11 @@ pktsock_pkts, pktsock_drops, pktsock_drops_total, pktsock_drops_percentage, pkts
 	    packet_count = 0;
 
         if(dumpbool) {
-		
         	hashpipe_status_lock_busywait_safe(&st);
         	hputi4(st.buf, "DUMPVOLT", 0);          // reset so we only do it once
         	hashpipe_status_unlock_safe(&st);
 
-            	// dump all raw voltages (the input buffer) to file
-		char voltage_filename[256];
-		char hostname[64];
-		int fd, rv;
-       		struct rlimit rl;
-
-		// increase file size limit (TODO only needs to be done once per run)
-		rv = getrlimit(RLIMIT_FSIZE, &rl);
-		if(rv == -1) {
-			perror("getting file size limit");
-		}
-		rl.rlim_cur = 12884908288;		// TODO set to unlimited? 
-		rv = setrlimit(RLIMIT_FSIZE, &rl);
-		if(rv == -1) {
-			perror("setting file size limit");
-		}
-
-            	gethostname(hostname, sizeof(hostname));
-            	sprintf(voltage_filename, "voltage_%s_%d_%lf", hostname, 0, double(time(NULL)/86400.0 + 2440587.5)-2400000.5);  // TODO unix time to MJD should be done via a macro
-		hashpipe_info(__FUNCTION__, "dumping voltages to file %s (%ld bytes)", voltage_filename, sizeof(s6_input_databuf_t));
-
-		fd = open(voltage_filename, O_RDWR, O_CREAT|O_WRONLY);
-		if(fd == -1) {
-			perror("opening voltage file");
-		} else {
-			rv = write(fd, db, sizeof(s6_input_databuf_t)); 
-			if(rv == -1) {
-				perror("writing voltage file");
-			} else {
-				fprintf(stderr, "wrote %ld bytes to voltage file\n", rv);
-			}
-		}
-		close(fd);
+		dump_voltages(db);
         }
     }
 
