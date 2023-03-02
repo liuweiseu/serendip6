@@ -40,6 +40,7 @@ int init_etfits(etfits_t *etf) {
         etf->s6_dir = (char *)"/usr/local/etc";
         hashpipe_warn(__FUNCTION__, "S6_DIR environment variable not set, using /usr/local/etc for ETFITS template");
     }
+    return 0;
 }
 
 //----------------------------------------------------------
@@ -895,6 +896,7 @@ int write_ccpwrs_header(etfits_t * etf) {
         hashpipe_error(__FUNCTION__, "Error writing hits header");
         fits_report_error(stderr, *status_p);
     }
+    return 0;
 }
 
 //----------------------------------------------------------

@@ -39,8 +39,8 @@ int coord_string_to_decimal(char * &coord_string, double * coord_decimal) {
 
 	char * pTokens[MAX_TOKENS];
 	int rv;
-
-	rv = tokenize_string(coord_string, ":", pTokens);
+    char colon[]=":";
+	rv = tokenize_string(coord_string, colon, pTokens);
 	if(rv == 3) {
 		*coord_decimal = (atof(pTokens[0]) + atof(pTokens[1])/60.0 + atof(pTokens[2])/3600.0);
 		rv = 0;
@@ -82,6 +82,7 @@ static int s6_strcpy(char * dest, char * src, int strsize=MROSTATUS_STRING_SIZE)
         dest[strsize-1] = '\0';
         hashpipe_error(__FUNCTION__, "FAST status string exceeded buffer size of %d, truncated : %s", strsize, dest);
     }
+    return 0;
 }
 
 //----------------------------------------------------------
