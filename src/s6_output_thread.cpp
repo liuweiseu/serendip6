@@ -178,7 +178,11 @@ static void *run(hashpipe_thread_args_t * args)
             rv = get_obs_gbt_info_from_redis(gbtstatus_p,   (char *)REDISHOST, 6379);
 #elif SOURCE_FAST
             rv = get_obs_fast_info_from_redis(faststatus_p, (char *)REDISHOST, 6379);
-            hputi4(st.buf, "DUMPVOLT", faststatus.DUMPVOLT);  // raw data dump request status
+            faststatus.TIME_LAG = (double)time(NULL) - faststatus.TIME;
+            hashpipe_status_lock_safe(&st);
+            hputr4(st.buf, "METALAG", faststatus.TIME_LAG); 	// meta data age in secs
+            hputi4(st.buf, "DUMPVOLT", faststatus.DUMPVOLT);  	// raw data dump request status
+            hashpipe_status_unlock_safe(&st);
 #elif SOURCE_MRO
             rv = get_obs_mro_info_from_redis(mrostatus_p, (char *)REDISHOST, 6379);
 #endif
@@ -213,6 +217,18 @@ static void *run(hashpipe_thread_args_t * args)
         }
 #ifdef SOURCE_FAST
 #if 1
+        // meta data timestamp check
+        if(fabs(faststatus.TIME_LAG) > META_TIME_LAG_THRESH) {
+            if(!BIT_IS_SET(idle_flag, idle_meta_data_stale)) {   // if bit not already set
+                hashpipe_warn(__FUNCTION__, "Meta data is too old (%lf secs) - adding as an idle condition", faststatus.TIME_LAG);
+                SET_BIT(idle_flag, idle_meta_data_stale);
+            }
+        } else {
+            if(BIT_IS_SET(idle_flag, idle_meta_data_stale)) {    // if bit is currently set
+                hashpipe_warn(__FUNCTION__, "Meta data is timely (%lf secs) - removing as an idle condition", faststatus.TIME_LAG);
+                CLEAR_BIT(idle_flag, idle_meta_data_stale);
+            }
+        }
         // rms check
         if(faststatus.ADCRMS < RMS_THRESH) {
             if(!BIT_IS_SET(idle_flag, idle_bad_rms)) {   // if bit not already set

@@ -95,6 +95,7 @@
 #define RMS_LENGTH		              1000
 #define RMS_THRESH		              3.0
 #define ACQUIRE_METADATA	          1
+#define META_TIME_LAG_THRESH        2
 
 #elif SOURCE_MRO
 #define REDISHOST                   "localhost"
@@ -122,6 +123,7 @@
 #define RMS_LENGTH		              1000
 #define RMS_THRESH		              3.0
 #define ACQUIRE_METADATA	          1
+#define META_TIME_LAG_THRESH        2
 #endif
 
 //#define N_COARSE_CHAN_PER_SUBSPECTRUM   (N_COARSE_CHAN / N_SUBSPECTRA_PER_SPECTRUM) 
