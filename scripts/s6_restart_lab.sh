@@ -11,15 +11,15 @@ POL1E=$POL1_ETH
 
 # set default values
 if [ ! ${POL0E} ]; then 
-    POL0E="enp216s0f0"
+    POL0E="enp3s0"
 fi
 
 if [ ! ${POL1E} ]; then 
-    POL1E="enp216s0f1"
+    POL1E="enp3s0d1"
 fi
 
 if [ ! ${DATA_DIR} ]; then 
-    DATA_DIR=/data01/serendip6_data
+    DATA_DIR=/data/serendip6_data
 fi
 # check if the data dir exist or not
 if [ -d ${DATA_DIR} ];then 
@@ -39,3 +39,5 @@ echo "Pol1 Eth: "$POL1E
 cd ${DATA_DIR} ; pkill -f "hashpipe -p serendip6_lab" ; /usr/local/bin/s6_init_lab.sh $POL0E $POL1E
 hashpipe_check_status -k RUNALWYS -I 0 -s 1
 hashpipe_check_status -k IDLE     -I 0 -s 0
+hashpipe_check_status -k RUNALWYS -I 1 -s 1
+hashpipe_check_status -k IDLE     -I 1 -s 0
