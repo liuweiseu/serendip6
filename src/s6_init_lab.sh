@@ -18,7 +18,7 @@ echo removing old semaphore, if any
 rm /dev/shm/sem.serendip6_gpu_sem_device_*
 
 # Setup parameters for one instance for lab test.
-instance_i=("1")
+instance_i=("1" "2")
 log_timestamp=`date +%Y%m%d_%H%M%S`
 instances=(
   # NOTE: when changing any of the following it is good practice to run:
@@ -37,7 +37,7 @@ instances=(
   # hashpipe command line parameters (serendip6 will run as hashpipe instances 1 and 2):
   " place holder for unused instance 0.  fastburst uses instance 0"
   "--physcpubind=10,11,12   --membind=0 ${iface_pol0} 0   10  11 12  ${beam} 0  $log_timestamp" # Instance 1
-  "--physcpubind=24,25,26 --membind=0 ${iface_pol1} 1  24 25 26  ${beam} 1  $log_timestamp" # Instance 2
+  "--physcpubind=13,14,15 --membind=0 ${iface_pol1} 0  13 14 15  ${beam} 1  $log_timestamp" # Instance 2
 )
 
 function init() {
