@@ -128,7 +128,7 @@
 #define POWER_THRESH                20.0
 #define MIN_POWER_THRESH            10.0
 #define MAXGPUHITS                  ((int)(1.0 / MIN_POWER_THRESH * N_FINE_CHAN))    
-#define MAXHITS                     4096
+#define MAXHITS                     8192
 
 // The following 3 #define's are needed only by s6_gen_fake_data.
 // Perhaps they should be removed at some point (with a change to
