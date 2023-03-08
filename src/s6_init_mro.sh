@@ -78,8 +78,8 @@ function init() {
     -o VERS6SW=$VERS6SW                \
     -o VERS6GW=$VERS6GW                \
     -o RUNALWYS=1                      \
-    -o MAXHITS=2048                    \
-	-o POWTHRSH=40					   \
+    -o MAXHITS=8192                    \
+	-o POWTHRSH=80					   \
     -o BINDHOST=$bindhost              \
     -o BINDPORT=12345                  \
     -o GPUDEV=$gpudev                  \
@@ -94,8 +94,8 @@ function init() {
     -o VERS6SW=$VERS6SW                \
     -o VERS6GW=$VERS6GW                \
     -o RUNALWYS=1                      \
-    -o MAXHITS=2048                    \
-	-o POWTHRSH=40					   \
+    -o MAXHITS=8192                    \
+	-o POWTHRSH=80					   \
     -o BINDHOST=$bindhost              \
     -o BINDPORT=12345                  \
     -o GPUDEV=$gpudev                  \
