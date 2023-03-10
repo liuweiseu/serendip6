@@ -76,6 +76,7 @@ S6_MRO_LIB_SOURCES  = s6_databuf.cpp \
 		  s6_fake_net_thread.cpp \
 		  s6_gpu_thread.cpp \
 		  s6_output_thread.cpp \
+		  s6_obs_data.cpp \
 		  s6_obs_data_mro.cpp \
 		  s6_etfits.cpp \
 		  s6_time.c
