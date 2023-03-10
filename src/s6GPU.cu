@@ -422,19 +422,16 @@ void do_r2c_fft(cufftHandle *fft_plan, float* &fft_input_ptr, float2* &fft_outpu
     if(use_timer) sum_of_times += timer_stop(timer, "FFT execution time");
 }
 
-void compute_power_spectrum(device_vectors_t *dv_p) {
-//fprintf(stderr, "In compute_power_spectrum 1\n");
+void compute_power_spectrum(device_vectors_t *dv_p, float2*  fft_output_ptr, int n_element) {
     Stopwatch timer;
     if(use_timer) timer_start(timer);
-//fprintf(stderr, "In compute_power_spectrum 2 %p %p\n", thrust::raw_pointer_cast(dv_p->fft_data_out_p), thrust::raw_pointer_cast(dv_p->powspec_p));
-//fprintf(stderr, "In compute_power_spectrum 2 %p %lu %p %lu\n", dv_p->fft_data_out_p, dv_p->fft_data_out_p->size() * sizeof(float2), dv_p->powspec_p, dv_p->powspec_p->size() * sizeof(float));
-	// Here we throw away (the -1) the "padding" element required on the output of the R2C FFT
-    thrust::transform(dv_p->fft_data_out_p->begin(), dv_p->fft_data_out_p->end()-1,
+
+    thrust::device_ptr<float2> fft_output_ptr_thrust(fft_output_ptr);
+    thrust::transform(fft_output_ptr_thrust, fft_output_ptr_thrust+n_element,
                       dv_p->powspec_p->begin(),
                       compute_complex_power());
     if(use_thread_sync) cudaThreadSynchronize();
     if(use_timer) sum_of_times += timer_stop(timer, "Power spectrum time");
-//fprintf(stderr, "In compute_power_spectrum 3\n");
 }
 
 struct printf_functor {
@@ -849,6 +846,7 @@ int spectroscopy(int n_cc,         		// N coarse chans
 #endif
 
 #if defined(SOURCE_FAST) || defined(SOURCE_MRO)   
+#if 0
 #ifdef REALLOC_CUB
 int spectroscopy(int n_cc, 				// N coarse chans
                  int n_fc,    			// N fine chans
@@ -1285,7 +1283,7 @@ int spectroscopy(int n_cc, 				// N coarse chans
     if(track_gpu_memory) get_gpu_mem_info("right after powerspec vector allocation");
 
     // Unpack from 8-bit to floats
-    if(use_timer) timer_start(timer);
+    
     thrust::transform(dv_p->raw_timeseries_p->begin(), 
                   dv_p->raw_timeseries_p->end(),
                   dv_p->fft_data_p->begin(),
@@ -1306,7 +1304,6 @@ int spectroscopy(int n_cc, 				// N coarse chans
     // are left as is in case we need to go back to one-input-at-a-time.
     float*  fft_input_ptr  = thrust::raw_pointer_cast(&((*dv_p->fft_data_p)[0]));
     float2* fft_output_ptr = thrust::raw_pointer_cast(&((*dv_p->fft_data_out_p)[0]));
-    //float2* fft_output_ptr = (float2*)thrust::raw_pointer_cast(&((*dv_p->fft_data_p)[0])); // if doing the FFT in place (not tested)
 
     // FFT. We create and destroy the cufft plan each time around in order to
     // conserve the considerable amount of GPU memory that the plan requires. 
@@ -1472,6 +1469,10 @@ if(use_thread_sync) cudaThreadSynchronize();
 }
 
 #endif
+#endif
+
+// ------------------------------------------------------------------
+
 #ifdef REALLOC_NONE
 
 int spectroscopy(int n_cc, 				// N coarse chans
@@ -1517,6 +1518,9 @@ int spectroscopy(int n_cc, 				// N coarse chans
 
 	//fprintf(stderr, "Not reallocating GPU memory\n");
 
+    //
+    // Setup
+    //
     if(track_gpu_memory) {
         char comment[256];
         sprintf(comment, "on entry to FAST spectroscopy() : n_pol = %d n_element = %d raw_timeseries_length in bytes = %lu (%3.2lf gigasamples) input data located at %p", 
@@ -1544,7 +1548,9 @@ int spectroscopy(int n_cc, 				// N coarse chans
     //dv_p->raw_timeseries_p   = new cub_device_vector<char>(n_input_data_bytes);  
     if(use_mem_timer) sum_of_mem_times += timer_stop(mem_timer, "mem new raw_timeseries time");
 
+    //
     // Copy to the device
+    //
 //print_current_time("right before time series copy");
     if(use_timer) timer_start(timer);
     thrust::copy(h_raw_timeseries, h_raw_timeseries + n_input_data_bytes / sizeof(char),
@@ -1575,17 +1581,14 @@ int spectroscopy(int n_cc, 				// N coarse chans
     if(use_mem_timer) sum_of_mem_times += timer_stop(mem_timer, "mem new hit_baselines_p time");
 
     if(use_mem_timer) timer_start(mem_timer);
-    //dv_p->fft_data_p         = new thrust::device_vector<float>(2*N_FINE_CHAN);    	// if doing the FFT in place (not tested)
-    if(!dv_p->fft_data_p) dv_p->fft_data_p         = new thrust::device_vector<float>(n_ts);         			// FFT input
+    if(!dv_p->fft_data_p) dv_p->fft_data_p         = new thrust::device_vector<float>(n_ts+1);    // FFT input
     //dv_p->fft_data_p         = new cub_device_vector<float>(n_ts);         			// FFT input
     if(use_mem_timer) sum_of_mem_times += timer_stop(mem_timer, "mem new fft_data_p time");
 
     if(track_gpu_memory) get_gpu_mem_info("right after FFT input vector allocation");
 
     if(use_mem_timer) timer_start(mem_timer);
-    //dv_p->fft_data_out_p     = (float2*)dv_p->fft_data_p;                             // if doing the FFT in place (not tested)
-    if(!dv_p->fft_data_out_p) dv_p->fft_data_out_p     = new thrust::device_vector<float2>(n_element);            // FFT output
-    //dv_p->fft_data_out_p     = new cub_device_vector<float2>(n_element+1);            // FFT output
+
     if(use_mem_timer) sum_of_mem_times += timer_stop(mem_timer, "mem new fft_data_out_p time");
 
     if(track_gpu_memory) get_gpu_mem_info("right after FFT output vector allocation");
@@ -1598,7 +1601,9 @@ int spectroscopy(int n_cc, 				// N coarse chans
 
     if(track_gpu_memory) get_gpu_mem_info("right after powerspec vector allocation");
 
+    //
     // Unpack from 8-bit to floats
+    //
     if(use_timer) timer_start(timer);
     thrust::transform(dv_p->raw_timeseries_p->begin(), 
                   dv_p->raw_timeseries_p->end(),
@@ -1613,14 +1618,16 @@ int spectroscopy(int n_cc, 				// N coarse chans
     if(use_mem_timer) sum_of_mem_times += timer_stop(mem_timer, "mem delete raw_timeseries_p time");
     // end fluffing to FFT input
     
+    //
+    // FFT
+    //
     // Input pointer varies with input.
     // Output pointer is constant - we reuse the output area for each input.
     // This is not true anymore - we analyze all inputs in one go. These
     // comments and this way of assigning fft_input_ptr and fft_output_ptr
     // are left as is in case we need to go back to one-input-at-a-time.
-    float*  fft_input_ptr  = thrust::raw_pointer_cast(&((*dv_p->fft_data_p)[0]));
-    float2* fft_output_ptr = thrust::raw_pointer_cast(&((*dv_p->fft_data_out_p)[0]));
-    //float2* fft_output_ptr = (float2*)thrust::raw_pointer_cast(&((*dv_p->fft_data_p)[0])); // if doing the FFT in place (not tested)
+    float*   fft_input_ptr   = thrust::raw_pointer_cast(&((*dv_p->fft_data_p)[0]));
+    float2*  fft_output_ptr  = (float2*)thrust::raw_pointer_cast(&((*dv_p->fft_data_p)[0]));
 
     // FFT. We create and destroy the cufft plan each time around in order to
     // conserve the considerable amount of GPU memory that the plan requires. 
@@ -1630,12 +1637,16 @@ int spectroscopy(int n_cc, 				// N coarse chans
                        cufft_config.nbatch, cufft_config.fft_type);                 // plan FFT
    	if(use_timer) sum_of_times += timer_stop(timer, "cufft plan time");
     do_r2c_fft                      (fft_plan_p, fft_input_ptr, fft_output_ptr);    // compute FFT
-    cufftDestroy(*fft_plan_p);
     if(track_gpu_memory) get_gpu_mem_info("right after FFT");
+    cufftDestroy(*fft_plan_p);
+    if(track_gpu_memory) get_gpu_mem_info("right after FFT plan destruction");
 
 	//dv_p->fft_data_out_p->erase(dv_p->fft_data_out_p->end());
 
-    compute_power_spectrum      (dv_p);                                         // compute power spectrum
+    //
+    // Form power spectrum
+    //
+    compute_power_spectrum      (dv_p, fft_output_ptr, n_fc);                                         // compute power spectrum
 
     // done with the timeseries and FFTs - delete the associated GPU memory
     if(track_gpu_memory) get_gpu_mem_info("right after compute power spectrum");
@@ -1682,7 +1693,10 @@ if(use_thread_sync) cudaThreadSynchronize();
 
     if(track_gpu_memory) get_gpu_mem_info("right after scanned vector allocation");
 
+    //		
     // Power normalization
+    //		
+//fprintf(stderr, "n_fc = %d n_element = %d n_ts = %d\n", n_fc, n_element, n_ts);
     compute_baseline            (dv_p, n_fc, n_element, smooth_scale);     
     if(track_gpu_memory) get_gpu_mem_info("right after baseline computation");
 if(use_thread_sync) cudaThreadSynchronize();
