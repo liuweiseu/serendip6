@@ -18,7 +18,7 @@ echo removing old semaphore, if any
 rm /dev/shm/sem.serendip6_gpu_sem_device_*
 
 # Setup parameters for one instance for lab test.
-instance_i=("1" "2")
+instance_i=("1")
 log_timestamp=`date +%Y%m%d_%H%M%S`
 instances=(
   # NOTE: when changing any of the following it is good practice to run:
