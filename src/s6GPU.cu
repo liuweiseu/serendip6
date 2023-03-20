@@ -1673,21 +1673,24 @@ if(use_thread_sync) cudaThreadSynchronize();
     // Allocate GPU memory for power normalization
 
     if(use_mem_timer) timer_start(mem_timer);
-    if(!dv_p->baseline_p) dv_p->baseline_p         = new thrust::device_vector<float>(n_element);
+    //if(!dv_p->baseline_p) dv_p->baseline_p         = new thrust::device_vector<float>(n_element);
+    if(!dv_p->baseline_p) dv_p->baseline_p         = dv_p->fft_data_p  + sizeof(float)*n_element;
     //dv_p->baseline_p         = new cub_device_vector<float>(n_element);
     if(use_mem_timer) sum_of_mem_times += timer_stop(mem_timer, "mem new baseline_p time");
 
     if(track_gpu_memory) get_gpu_mem_info("right after baseline vector allocation");
 
     if(use_mem_timer) timer_start(mem_timer);
-    if(!dv_p->normalised_p) dv_p->normalised_p       = new thrust::device_vector<float>(n_element);
+    //if(!dv_p->normalised_p) dv_p->normalised_p       = new thrust::device_vector<float>(n_element);
+    if(!dv_p->normalised_p) dv_p->normalised_p       = dv_p->fft_data_p;
     //dv_p->normalised_p       = new cub_device_vector<float>(n_element);
     if(use_mem_timer) sum_of_mem_times += timer_stop(mem_timer, "mem new normalised_p time");
 
     if(track_gpu_memory) get_gpu_mem_info("right after normalized vector allocation");
 
     if(use_mem_timer) timer_start(mem_timer);
-    if(!dv_p->scanned_p) dv_p->scanned_p          = new thrust::device_vector<float>(n_element);
+    //if(!dv_p->scanned_p) dv_p->scanned_p          = new thrust::device_vector<float>(n_element);
+    if(!dv_p->scanned_p) dv_p->scanned_p          = dv_p->fft_data_p;
     //dv_p->scanned_p          = new cub_device_vector<float>(n_element);
     if(use_mem_timer) sum_of_mem_times += timer_stop(mem_timer, "mem new scanned_p time");
 
