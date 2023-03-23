@@ -1570,8 +1570,8 @@ if(use_thread_sync) cudaThreadSynchronize();
 // ------------------------------------------------------------------
 
 #ifdef REALLOC_NONE
-
-int spectroscopy(int n_cc, 				// N coarse chans
+int spectroscopy(cufftHandle *fft_plan_p,
+                 int n_cc, 				// N coarse chans
                  int n_fc,    			// N fine chans
                  int n_ts,    			// N time samples
                  int n_pol,           	// N pols
@@ -1601,8 +1601,8 @@ int spectroscopy(int n_cc, 				// N coarse chans
     int n_element = n_cc*n_fc;       // number of elements in GPU structures
     size_t nhits;
     size_t total_nhits=0;
-    cufftHandle fft_plan;
-    cufftHandle *fft_plan_p = &fft_plan;
+    //cufftHandle fft_plan;
+    //cufftHandle *fft_plan_p = &fft_plan;
     //static cufftHandle fft_plan;
     //static cufftHandle *fft_plan_p = &fft_plan;
     int pol = n_pol;                // for ease of code reading
@@ -1728,13 +1728,15 @@ int spectroscopy(int n_cc, 				// N coarse chans
     // FFT. We create and destroy the cufft plan each time around in order to
     // conserve the considerable amount of GPU memory that the plan requires. 
    	if(use_timer) timer_start(timer);
-   		create_fft_plan_1d(fft_plan_p, cufft_config.istride, cufft_config.idist, 
+   	/*
+    	create_fft_plan_1d(fft_plan_p, cufft_config.istride, cufft_config.idist, 
                        cufft_config.ostride, cufft_config.odist, cufft_config.nfft_, 
                        cufft_config.nbatch, cufft_config.fft_type);                 // plan FFT
+    */
    	if(use_timer) sum_of_times += timer_stop(timer, "cufft plan time");
     do_r2c_fft                      (fft_plan_p, fft_input_ptr, fft_output_ptr);    // compute FFT
     if(track_gpu_memory) get_gpu_mem_info("right after FFT");
-    cufftDestroy(*fft_plan_p);
+    //cufftDestroy(*fft_plan_p);
     if(track_gpu_memory) get_gpu_mem_info("right after FFT plan destruction");
 
 	//dv_p->fft_data_out_p->erase(dv_p->fft_data_out_p->end());

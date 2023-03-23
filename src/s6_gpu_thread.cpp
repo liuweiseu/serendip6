@@ -78,7 +78,7 @@ int init_gpu_memory(uint64_t num_coarse_chan, cufftHandle *fft_plan_p, int initi
 
     //get_gpu_mem_info("right before creating fft plan");
     //clock_gettime(CLOCK_MONOTONIC, &stop);
-    //create_fft_plan_1d(fft_plan_p, cufft_config.istride, cufft_config.idist, cufft_config.ostride, cufft_config.odist, cufft_config.nfft_, cufft_config.nbatch, cufft_config.fft_type);
+    create_fft_plan_1d(fft_plan_p, cufft_config.istride, cufft_config.idist, cufft_config.ostride, cufft_config.odist, cufft_config.nfft_, cufft_config.nbatch, cufft_config.fft_type);
     //clock_gettime(CLOCK_MONOTONIC, &stop);
     //get_gpu_mem_info("right after creating fft plan");
 
@@ -161,8 +161,7 @@ static void *run(hashpipe_thread_args_t * args)
 
     //hashpipe_status_lock_safe(&st);
     //hputr4(st.buf, "POWTHRSH", POWER_THRESH);
-    //hashpipe_status_unlock_safe(&st);
-
+    //hashpipe_status_unlock_safe(&st); 
     while (run_threads()) {
 
         hashpipe_status_lock_safe(&st);
@@ -317,7 +316,8 @@ fprintf(stderr, "(n_)pol = %lu num_coarse_chan = %lu n_bytes_per_bors = %lu  bor
                                      &db_out->block[curblock_out],                  // s6_output_block
                                      gpu_sem);                                      // semaphore to serialize GPU access
 #elif SOURCE_MRO
-                nhits = spectroscopy(num_coarse_chan/N_SUBSPECTRA_PER_SPECTRUM,     // n_cc  
+                nhits = spectroscopy(fft_plan_p,
+                                     num_coarse_chan/N_SUBSPECTRA_PER_SPECTRUM,     // n_cc  
                                      N_FINE_CHAN,                                   // n_fc    
                                      N_TIME_SAMPLES,                                // n_ts
                                      db_in->block[curblock_in].header.sid % 2,      // n_pol, the pol itself, one per data strem

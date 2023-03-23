@@ -98,7 +98,7 @@ void get_gpu_mem_info(const char * comment);
 int init_device(int gpu_dev);
 
 void gpu_fini();
-
+/*
 void create_fft_plan_1d(cufftHandle* plan,
                             int          istride,
                             int          idist,
@@ -107,8 +107,18 @@ void create_fft_plan_1d(cufftHandle* plan,
                             size_t       nfft_,
                             size_t       nbatch,
 							cufftType    fft_type);
+*/
+void create_fft_plan_1d(cufftHandle* plan,
+                            int          istride,
+                            int          idist,
+                            int          ostride,
+                            int          odist,
+                            int          nfft_,
+                            size_t       nbatch,
+							cufftType    fft_type);
 
-int spectroscopy(int n_cc,
+int spectroscopy(cufftHandle *fft_plan_p,
+                 int n_cc,
                  int n_fc,
                  int n_ts,
                  int n_pol, // either the pol itself or the number of pols
