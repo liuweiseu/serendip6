@@ -500,12 +500,63 @@ void compute_baseline(device_vectors_t *dv_p, int n_fc, int n_element, float smo
     //thrust::for_each(dv_p->baseline_p->begin(), dv_p->baseline_p->end(), printf_functor());
 }
 
+void compute_baseline_memopt(device_vectors_t *dv_p, float* baseline_p, int n_fc, int n_element, float smooth_scale) {
+// Compute smoothed power spectrum baseline
+
+    using thrust::make_transform_iterator;
+    using thrust::make_counting_iterator;
+
+    if(track_gpu_memory) get_gpu_mem_info("in compute_baseline(), right after making iterators");
+    Stopwatch timer;
+    if(use_timer) timer_start(timer);
+    thrust::exclusive_scan_by_key(make_transform_iterator(make_counting_iterator<int>(0),
+                                                          //_1 / n_fc),
+                                                          divide_by<int>(n_fc)),
+                                  make_transform_iterator(make_counting_iterator<int>(n_element),
+                                                          //_1 / n_fc),
+                                                          divide_by<int>(n_fc)),
+                                  dv_p->powspec_p->begin(),
+                                  dv_p->scanned_p->begin());
+    if(use_thread_sync) cudaThreadSynchronize();
+    if(use_timer) sum_of_times += timer_stop(timer, "Scan time");
+    if(track_gpu_memory) get_gpu_mem_info("in compute_baseline(), right after scan");
+    
+    if(use_timer) timer_start(timer);
+    const float* d_scanned_ptr = thrust::raw_pointer_cast(&(*dv_p->scanned_p)[0]);
+  //const float* d_scanned_ptr = thrust::raw_pointer_cast(&(*dv.scanned_p   )[0]);
+    thrust::device_ptr<float> baseline_ptr(baseline_p);
+    thrust::transform(make_counting_iterator<uint>(0),
+                      make_counting_iterator<uint>(n_element),
+                      baseline_ptr,
+                      running_mean_by_region(smooth_scale,
+                                             n_fc,
+                                             d_scanned_ptr));
+    if(use_thread_sync) cudaThreadSynchronize();
+    if(use_timer) sum_of_times += timer_stop(timer, "Running mean time");
+    if(track_gpu_memory) get_gpu_mem_info("in compute_baseline(), right after running mean by region");
+    //thrust::for_each(dv_p->baseline_p->begin(), dv_p->baseline_p->end(), printf_functor());
+}
+
 void normalize_power_spectrum(device_vectors_t *dv_p) {
 
     Stopwatch timer;
     if(use_timer) timer_start(timer);
     thrust::transform(dv_p->powspec_p->begin(), dv_p->powspec_p->end(),
                       dv_p->baseline_p->begin(),
+                      dv_p->normalised_p->begin(),
+                      //_1 / _2);
+                      thrust::divides<float>());
+    if(use_thread_sync) cudaThreadSynchronize();
+    if(use_timer) sum_of_times += timer_stop(timer, "Normalisation time");
+}
+
+void normalize_power_spectrum_memopt(device_vectors_t *dv_p,float* baseline_p) {
+
+    Stopwatch timer;
+    if(use_timer) timer_start(timer);
+    thrust::device_ptr<float>baseline_ptr(baseline_p);
+    thrust::transform(dv_p->powspec_p->begin(), dv_p->powspec_p->end(),
+                      baseline_ptr,
                       dv_p->normalised_p->begin(),
                       //_1 / _2);
                       thrust::divides<float>());
@@ -534,7 +585,7 @@ size_t find_hits(device_vectors_t *dv_p, int n_element, size_t maxhits, float po
                                    //_1 > power_thresh) - dv_p->hit_indices_p->begin();
                                    greater_than_val<float>(power_thresh))
                                                           - dv_p->hit_indices_p->begin();
-
+    
     nhits = nhits > maxhits ? maxhits : nhits;       // overrun protection - hits beyond maxgpuhits are thrown away
     dv_p->hit_indices_p->resize(nhits);                 // this will only be resized downwards
                                             
@@ -556,6 +607,51 @@ size_t find_hits(device_vectors_t *dv_p, int n_element, size_t maxhits, float po
 
     return nhits;
 }    
+
+size_t find_hits_memopt(device_vectors_t *dv_p, float* baseline_p, int n_element, size_t maxhits, float power_thresh) {
+// Extract and retrieve values exceeding the threshold
+
+    using thrust::make_counting_iterator;
+
+    size_t nhits;
+
+    Stopwatch timer;
+    if(use_timer) timer_start(timer);
+    dv_p->hit_indices_p->resize(n_element); // Note: Upper limit on required storage TODO - is n_element being set right?
+
+    // Find normalised powers (S/N) over threshold.
+    // The hit_indices vector will then index the powspec (detected powers) and baseline (mean powers) as well
+    // as the normalized power (S/N) vector.
+    nhits = thrust::copy_if(make_counting_iterator<int>(0),
+                                   make_counting_iterator<int>(n_element),
+                                   dv_p->normalised_p->begin(),  // stencil
+                                   dv_p->hit_indices_p->begin(), // result
+                                   //_1 > power_thresh) - dv_p->hit_indices_p->begin();
+                                   greater_than_val<float>(power_thresh))
+                                                          - dv_p->hit_indices_p->begin();
+    
+    nhits = nhits > maxhits ? maxhits : nhits;       // overrun protection - hits beyond maxgpuhits are thrown away
+    dv_p->hit_indices_p->resize(nhits);                 // this will only be resized downwards
+                                            
+    if(use_thread_sync) cudaThreadSynchronize();
+    if(use_timer) sum_of_times += timer_stop(timer, "Hit extraction time");
+    
+    if(use_timer) timer_start(timer);
+    // Retrieve (hit) detected and mean powers into their own vectors for ease of outputting.
+    dv_p->hit_powers_p->resize(nhits);
+    thrust::gather(dv_p->hit_indices_p->begin(), dv_p->hit_indices_p->end(),
+                   dv_p->powspec_p->begin(),
+                   dv_p->hit_powers_p->begin());
+    dv_p->hit_baselines_p->resize(nhits);
+    thrust::device_ptr<float>baseline_ptr(baseline_p);
+    thrust::gather(dv_p->hit_indices_p->begin(), dv_p->hit_indices_p->end(),
+                   baseline_ptr,
+                   dv_p->hit_baselines_p->begin());
+    if(use_thread_sync) cudaThreadSynchronize();
+    if(use_timer) sum_of_times += timer_stop(timer, "Hit info gather time");
+
+    return nhits;
+}   
 
 #if defined(SOURCE_FAST) || defined(SOURCE_MRO)
 #if 0
@@ -1673,7 +1769,8 @@ if(use_thread_sync) cudaThreadSynchronize();
     // Allocate GPU memory for power normalization
 
     if(use_mem_timer) timer_start(mem_timer);
-    if(!dv_p->baseline_p) dv_p->baseline_p         = new thrust::device_vector<float>(n_element);
+    //if(!dv_p->baseline_p) dv_p->baseline_p         = new thrust::device_vector<float>(n_element);
+    float *baseline_p = fft_input_ptr + n_element;
     //if(!dv_p->baseline_p) dv_p->baseline_p         = dv_p->fft_data_p  + sizeof(float)*n_element;
     //dv_p->baseline_p         = new cub_device_vector<float>(n_element);
     if(use_mem_timer) sum_of_mem_times += timer_stop(mem_timer, "mem new baseline_p time");
@@ -1700,7 +1797,8 @@ if(use_thread_sync) cudaThreadSynchronize();
     // Power normalization
     //		
 //fprintf(stderr, "n_fc = %d n_element = %d n_ts = %d\n", n_fc, n_element, n_ts);
-    compute_baseline            (dv_p, n_fc, n_element, smooth_scale);     
+    //compute_baseline            (dv_p, n_fc, n_element, smooth_scale);   
+    compute_baseline_memopt            (dv_p, baseline_p, n_fc, n_element, smooth_scale); 
     if(track_gpu_memory) get_gpu_mem_info("right after baseline computation");
 if(use_thread_sync) cudaThreadSynchronize();
 
@@ -1709,11 +1807,13 @@ if(use_thread_sync) cudaThreadSynchronize();
     if(use_mem_timer) sum_of_mem_times += timer_stop(mem_timer, "mem delete scanned_p time");
 
     if(track_gpu_memory) get_gpu_mem_info("right after scanned vector deletion");
-    normalize_power_spectrum    (dv_p);
+    //normalize_power_spectrum    (dv_p);
+    normalize_power_spectrum_memopt    (dv_p, baseline_p);
 
     // Hit finding
     if(track_gpu_memory) get_gpu_mem_info("right after spectrum normalization");
-    nhits = find_hits           (dv_p, n_element, maxhits, power_thresh);
+    //nhits = find_hits           (dv_p, n_element, maxhits, power_thresh);
+    nhits = find_hits_memopt           (dv_p, baseline_p, n_element, maxhits, power_thresh);
     if(track_gpu_memory) get_gpu_mem_info("right after find hits");
     // TODO should probably report if nhits == maxgpuhits, ie overflow
     
