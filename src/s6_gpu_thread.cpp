@@ -53,8 +53,12 @@ int init_gpu_memory(uint64_t num_coarse_chan, cufftHandle *fft_plan_p, int initi
     // The maximum number of coarse channels is one determining factor 
     // of input data buffer size and is set at compile time. At run time 
     // the number of coarse channels can change but this does not affect 
-    // the size of the input data buffer.  
-    cufft_config.nfft_     = N_TIME_SAMPLES;                                
+    // the size of the input data buffer.
+    #ifndef CFFT  
+        cufft_config.nfft_     = N_TIME_SAMPLES;                                
+    #else
+        cufft_config.nfft_     = N_TIME_SAMPLES/2;
+    #endif
     cufft_config.ostride   = 1;                                
     cufft_config.idist     = 1;                                
     cufft_config.odist     = cufft_config.nfft_;                        
@@ -65,7 +69,11 @@ int init_gpu_memory(uint64_t num_coarse_chan, cufftHandle *fft_plan_p, int initi
     cufft_config.istride   = N_COARSE_CHAN / N_SUBSPECTRA_PER_SPECTRUM;     // (must stride over all (max) chans)
 #elif SOURCE_MRO
     fprintf(stderr, "configuring cuFFT for real to complex transforms (cufftType %d)\n", CUFFT_R2C);
-	cufft_config.fft_type = CUFFT_R2C;								
+    #ifndef CFFT
+	    cufft_config.fft_type = CUFFT_R2C;
+    #else
+        cufft_config.fft_type = CUFFT_C2C;
+    #endif								
     cufft_config.nbatch    = (num_coarse_chan);                             // only FFT the utilized chans      
     cufft_config.istride   = N_COARSE_CHAN / N_SUBSPECTRA_PER_SPECTRUM;     // (must stride over all (max) chans)
 #else

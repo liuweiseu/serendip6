@@ -36,6 +36,7 @@ typedef struct {
 //#define REALLOC_CUB
 //#define REALLOC_STD
 #define REALLOC_NONE
+#define CFFT
 #if defined REALLOC_CUB
 typedef struct {
     cub_device_vector<float> * fft_data_p;             
@@ -54,7 +55,8 @@ typedef struct {
 #endif	
 #if defined REALLOC_STD || defined REALLOC_NONE
 typedef struct {
-    thrust::device_vector<float> * fft_data_p;             
+    thrust::device_vector<float> * fft_data_p;  
+    thrust::device_vector<float2> * cfft_data_p;           
     thrust::device_vector<char>  * raw_timeseries_p;       // input time series, correctly ordered
     thrust::device_vector<float2> * fft_data_out_p;         
     thrust::device_vector<float>  * powspec_p;              // detected power spectra
@@ -72,7 +74,7 @@ typedef struct {
 #else	// not SOURCE_FAST
 
 typedef struct {
-    thrust::device_vector<float> * fft_data_p;             
+    thrust::device_vector<float> * fft_data_p;            
     thrust::device_vector<char>  * raw_timeseries_p;       // input time series, correctly ordered
     thrust::device_vector<float2> * fft_data_out_p;         
     thrust::device_vector<float>  * powspec_p;              // detected power spectra

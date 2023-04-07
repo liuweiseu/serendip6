@@ -22,7 +22,7 @@
 
 // This is used for testing serendip6 in the lab
 #ifdef LAB_TEST
-#define MRO_SAMPLES               256
+#define MRO_SAMPLES               512
 #else
 #define MRO_SAMPLES               1024
 #endif
