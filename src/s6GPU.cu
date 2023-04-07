@@ -90,7 +90,7 @@ device_vectors_t * init_device_vectors() {
 
 #define PI 3.1415926535
 #define WGS 1024
-#define NFFT    (1024*1024*1024)
+#define NFFT    (128*1024*1024)
 dim3 dimgrid(NFFT/WGS,1);
 dim3 dimblock(WGS,1);
 __device__ float gpusin(int n)
@@ -2063,7 +2063,7 @@ int spectroscopy(int n_cc, 				// N coarse chans
         if(!dv_p->fft_data_p) dv_p->fft_data_p         = new thrust::device_vector<float>(n_ts+1);    // FFT input
     #else
         // if we use cfft, the input data type is float2
-        if(!dv_p->cfft_data_p) dv_p->cfft_data_p         = new thrust::device_vector<float2>(n_ts+1);    // FFT input
+        if(!dv_p->cfft_data_p) dv_p->cfft_data_p         = new thrust::device_vector<float2>(n_fc);    // FFT input
     #endif
     //dv_p->fft_data_p         = new cub_device_vector<float>(n_ts);         			// FFT input
     if(use_mem_timer) sum_of_mem_times += timer_stop(mem_timer, "mem new fft_data_p time");
@@ -2098,7 +2098,7 @@ int spectroscopy(int n_cc, 				// N coarse chans
         uint16_t *raw_timeseries_u16_p = (uint16_t *)thrust::raw_pointer_cast(&((*dv_p->raw_timeseries_p)[0]));
         thrust::device_ptr<uint16_t>raw_timeseries_u16_ptr(raw_timeseries_u16_p);
         thrust::transform(raw_timeseries_u16_ptr,
-                          raw_timeseries_u16_ptr + n_ts,
+                          raw_timeseries_u16_ptr + n_fc,
                           dv_p->cfft_data_p->begin(),
                           convert_real_8b_to_float2());
     #endif

@@ -68,10 +68,11 @@ int init_gpu_memory(uint64_t num_coarse_chan, cufftHandle *fft_plan_p, int initi
     cufft_config.nbatch    = (num_coarse_chan);                             // only FFT the utilized chans      
     cufft_config.istride   = N_COARSE_CHAN / N_SUBSPECTRA_PER_SPECTRUM;     // (must stride over all (max) chans)
 #elif SOURCE_MRO
-    fprintf(stderr, "configuring cuFFT for real to complex transforms (cufftType %d)\n", CUFFT_R2C);
     #ifndef CFFT
+        fprintf(stderr, "configuring cuFFT for real to complex transforms (cufftType %d)\n", CUFFT_R2C);
 	    cufft_config.fft_type = CUFFT_R2C;
     #else
+        fprintf(stderr, "configuring cuFFT for complex to complex transforms (cufftType %d)\n", CUFFT_C2C);
         cufft_config.fft_type = CUFFT_C2C;
     #endif								
     cufft_config.nbatch    = (num_coarse_chan);                             // only FFT the utilized chans      

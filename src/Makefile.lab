@@ -1,5 +1,5 @@
 NVCC        = nvcc
-NVCCFLAGS   = -O3 --compiler-options '-fPIC' --shared -Xcompiler -Wall -arch=sm_35 -lrt -lcudart -lcufft -lineinfo -std=c++14
+NVCCFLAGS   = -O3 --compiler-options '-fPIC' --shared -Xcompiler -Wall -arch=sm_61 -lrt -lcudart -lcufft -lineinfo -std=c++14
 CC          = gcc
 
 S6_LOCATION = 
