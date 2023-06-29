@@ -2170,20 +2170,20 @@ printf("Start in spectroscopy.\n");
     // FFT. We create and destroy the cufft plan each time around in order to
     // conserve the considerable amount of GPU memory that the plan requires. 
    	if(use_timer) timer_start(timer);
-    printf("do fft.\n");
-    /*
-   		create_fft_plan_1d(fft_plan_p, cufft_config.istride, cufft_config.idist, 
+    printf("do fft...\n");
+    
+   	create_fft_plan_1d(fft_plan_p, cufft_config.istride, cufft_config.idist, 
                        cufft_config.ostride, cufft_config.odist, cufft_config.nfft_, 
                        cufft_config.nbatch, cufft_config.fft_type);                 // plan FFT
-   	*/
+   	
     if(use_timer) sum_of_times += timer_stop(timer, "cufft plan time");
     #ifndef CFFT
         do_r2c_fft                      (fft_plan_p, fft_input_ptr, fft_output_ptr);    // compute FFT
     #else
-        //do_fft                      (fft_plan_p, fft_input_ptr, fft_output_ptr);    // compute FFT
+        do_fft                      (fft_plan_p, fft_input_ptr, fft_output_ptr);    // compute FFT
     #endif
     if(track_gpu_memory) get_gpu_mem_info("right after FFT");
-    //cufftDestroy(*fft_plan_p);
+    cufftDestroy(*fft_plan_p);
     if(track_gpu_memory) get_gpu_mem_info("right after FFT plan destruction");
     printf("cfft_cal.\n");
 	//dv_p->fft_data_out_p->erase(dv_p->fft_data_out_p->end());
@@ -2191,6 +2191,7 @@ printf("Start in spectroscopy.\n");
     //
     // Form power spectrum
     //
+    cudaDeviceSynchronize();
     printf("compute_power_spectrum.\n");
     compute_power_spectrum      (dv_p, fft_output_ptr, n_fc);                                         // compute power spectrum
 
