@@ -79,6 +79,7 @@ device_vectors_t * init_device_vectors() {
     dv_p->hit_baselines_p=0;  
     dv_p->hit_indices_p=0;  
     dv_p->hit_powers_p=0; 
+    dv_p->cfft_data_p=0;
 
 #if !defined(SOURCE_FAST) && !defined(SOURCE_MRO)
     dv_p->hit_indices_p      = new thrust::device_vector<int>();
@@ -553,27 +554,45 @@ void compute_baseline(device_vectors_t *dv_p, int n_fc, int n_element, float smo
 
 void compute_baseline_memopt(device_vectors_t *dv_p, float* baseline_p, int n_fc, int n_element, float smooth_scale) {
 // Compute smoothed power spectrum baseline
-
+    printf("in compute_baseline_memopt...\n");
     using thrust::make_transform_iterator;
     using thrust::make_counting_iterator;
 
     if(track_gpu_memory) get_gpu_mem_info("in compute_baseline(), right after making iterators");
     Stopwatch timer;
     if(use_timer) timer_start(timer);
-    thrust::exclusive_scan_by_key(make_transform_iterator(make_counting_iterator<int>(0),
-                                                          //_1 / n_fc),
-                                                          divide_by<int>(n_fc)),
-                                  make_transform_iterator(make_counting_iterator<int>(n_element),
-                                                          //_1 / n_fc),
-                                                          divide_by<int>(n_fc)),
-                                  dv_p->powspec_p->begin(),
-                                  dv_p->scanned_p->begin());
+    #ifndef CFFT
+    printf("going to do scan CFFT...\n");
+        thrust::exclusive_scan_by_key(make_transform_iterator(make_counting_iterator<int>(0),
+                                                            //_1 / n_fc),
+                                                            divide_by<int>(n_fc)),
+                                    make_transform_iterator(make_counting_iterator<int>(n_element),
+                                                            //_1 / n_fc),
+                                                            divide_by<int>(n_fc)),
+                                    dv_p->powspec_p->begin(),
+                                    dv_p->scanned_p->begin());
+    #else
+    printf("going to do scan...\n");
+        thrust::exclusive_scan_by_key(make_transform_iterator(make_counting_iterator<int>(0),
+                                                            //_1 / n_fc),
+                                                            divide_by<int>(n_fc)),
+                                    make_transform_iterator(make_counting_iterator<int>(n_element),
+                                                            //_1 / n_fc),
+                                                            divide_by<int>(n_fc)),
+                                    dv_p->powspec_p->begin(),
+                                    dv_p->scanned_dev_ptr);
+    #endif
     if(use_thread_sync) cudaThreadSynchronize();
     if(use_timer) sum_of_times += timer_stop(timer, "Scan time");
     if(track_gpu_memory) get_gpu_mem_info("in compute_baseline(), right after scan");
     
     if(use_timer) timer_start(timer);
-    const float* d_scanned_ptr = thrust::raw_pointer_cast(&(*dv_p->scanned_p)[0]);
+    #ifndef CFFT
+        const float* d_scanned_ptr = thrust::raw_pointer_cast(&(*dv_p->scanned_p)[0]);
+    #else
+        const float* d_scanned_ptr = dv_p->scanned_ptr;
+    #endif
+    printf("going to do transform...\n");
   //const float* d_scanned_ptr = thrust::raw_pointer_cast(&(*dv.scanned_p   )[0]);
     thrust::device_ptr<float> baseline_ptr(baseline_p);
     thrust::transform(make_counting_iterator<uint>(0),
@@ -585,7 +604,6 @@ void compute_baseline_memopt(device_vectors_t *dv_p, float* baseline_p, int n_fc
     if(use_thread_sync) cudaThreadSynchronize();
     if(use_timer) sum_of_times += timer_stop(timer, "Running mean time");
     if(track_gpu_memory) get_gpu_mem_info("in compute_baseline(), right after running mean by region");
-    //thrust::for_each(dv_p->baseline_p->begin(), dv_p->baseline_p->end(), printf_functor());
 }
 
 void normalize_power_spectrum(device_vectors_t *dv_p) {
@@ -606,14 +624,23 @@ void normalize_power_spectrum_memopt(device_vectors_t *dv_p,float* baseline_p) {
     Stopwatch timer;
     if(use_timer) timer_start(timer);
     thrust::device_ptr<float>baseline_ptr(baseline_p);
-    thrust::transform(dv_p->powspec_p->begin(), dv_p->powspec_p->end(),
-                      baseline_ptr,
-                      dv_p->normalised_p->begin(),
-                      //_1 / _2);
-                      thrust::divides<float>());
+    #ifndef CFFT
+        thrust::transform(dv_p->powspec_p->begin(), dv_p->powspec_p->end(),
+                        baseline_ptr,
+                        dv_p->normalised_p->begin(),
+                        //_1 / _2);
+                        thrust::divides<float>());
+    #else
+        thrust::transform(dv_p->powspec_p->begin(), dv_p->powspec_p->end(),
+                        baseline_ptr,
+                        dv_p->normalised_dev_ptr,
+                        //_1 / _2);
+                        thrust::divides<float>());
+    #endif
     if(use_thread_sync) cudaThreadSynchronize();
     if(use_timer) sum_of_times += timer_stop(timer, "Normalisation time");
 }
+
 
 size_t find_hits(device_vectors_t *dv_p, int n_element, size_t maxhits, float power_thresh) {
 // Extract and retrieve values exceeding the threshold
@@ -673,14 +700,23 @@ size_t find_hits_memopt(device_vectors_t *dv_p, float* baseline_p, int n_element
     // Find normalised powers (S/N) over threshold.
     // The hit_indices vector will then index the powspec (detected powers) and baseline (mean powers) as well
     // as the normalized power (S/N) vector.
-    nhits = thrust::copy_if(make_counting_iterator<int>(0),
-                                   make_counting_iterator<int>(n_element),
-                                   dv_p->normalised_p->begin(),  // stencil
-                                   dv_p->hit_indices_p->begin(), // result
-                                   //_1 > power_thresh) - dv_p->hit_indices_p->begin();
-                                   greater_than_val<float>(power_thresh))
-                                                          - dv_p->hit_indices_p->begin();
-    
+    #ifndef CFFT
+        nhits = thrust::copy_if(make_counting_iterator<int>(0),
+                                    make_counting_iterator<int>(n_element),
+                                    dv_p->normalised_p->begin(),  // stencil
+                                    dv_p->hit_indices_p->begin(), // result
+                                    //_1 > power_thresh) - dv_p->hit_indices_p->begin();
+                                    greater_than_val<float>(power_thresh))
+                                                            - dv_p->hit_indices_p->begin();
+    #else
+        nhits = thrust::copy_if(make_counting_iterator<int>(0),
+                                    make_counting_iterator<int>(n_element),
+                                    dv_p->normalised_dev_ptr,  // stencil
+                                    dv_p->hit_indices_p->begin(), // result
+                                    //_1 > power_thresh) - dv_p->hit_indices_p->begin();
+                                    greater_than_val<float>(power_thresh))
+                                                            - dv_p->hit_indices_p->begin();
+    #endif
     nhits = nhits > maxhits ? maxhits : nhits;       // overrun protection - hits beyond maxgpuhits are thrown away
     dv_p->hit_indices_p->resize(nhits);                 // this will only be resized downwards
                                             
@@ -1320,7 +1356,7 @@ int spectroscopy(int n_cc, 				// N coarse chans
                  size_t n_input_data_bytes,
                  s6_output_block_t *s6_output_block,
 				 sem_t * gpu_sem) {
-
+    
 // Note - beam or subspectra. Sometimes we are passed a beam's worth of coarse 
 // channels (eg, at AO). At other times we are passed a subspectrum of channels  
 // (eg, at GBT). In both cases, each course channel runs the full length of fine
@@ -1851,7 +1887,7 @@ if(use_thread_sync) cudaThreadSynchronize();
     //compute_baseline            (dv_p, n_fc, n_element, smooth_scale);   
     compute_baseline_memopt            (dv_p, baseline_p, n_fc, n_element, smooth_scale); 
     if(track_gpu_memory) get_gpu_mem_info("right after baseline computation");
-if(use_thread_sync) cudaThreadSynchronize();
+    if(use_thread_sync) cudaThreadSynchronize();
 
     if(use_mem_timer) timer_start(mem_timer);
     //..delete(dv_p->scanned_p);          
@@ -1904,7 +1940,7 @@ if(use_thread_sync) cudaThreadSynchronize();
     if(use_timer) sum_of_times += timer_stop(timer, "Copy to return vector time");
         
     // delete remaining GPU memory
-if(use_thread_sync) cudaThreadSynchronize();
+    if(use_thread_sync) cudaThreadSynchronize();
 
     if(use_mem_timer) timer_start(mem_timer);
     //..delete dv_p->powspec_p;          
@@ -1966,7 +2002,7 @@ int spectroscopy(int n_cc, 				// N coarse chans
                  size_t n_input_data_bytes,
                  s6_output_block_t *s6_output_block,
 				 sem_t * gpu_sem) {
-
+printf("Start in spectroscopy.\n");
 // Note - beam or subspectra. Sometimes we are passed a beam's worth of coarse 
 // channels (eg, at AO). At other times we are passed a subspectrum of channels  
 // (eg, at GBT). In both cases, each course channel runs the full length of fine
@@ -2005,9 +2041,9 @@ int spectroscopy(int n_cc, 				// N coarse chans
                 n_pol, n_element, n_input_data_bytes, (double)n_input_data_bytes/1024/1024/1024, input_data);
         get_gpu_mem_info((const char *)comment);
     }
-
+    printf("init_device_vectors.\n");
 	if(!dv_p) dv_p = init_device_vectors(); 
-
+    printf("finish init_device_vectors.\n");
     char * h_raw_timeseries = (char *)input_data;
 
 //#define DUMP_RAW_SAMPLES
@@ -2022,6 +2058,7 @@ int spectroscopy(int n_cc, 				// N coarse chans
     if(use_total_gpu_timer) total_gpu_timer.start();
 
     if(use_mem_timer) timer_start(mem_timer);
+    printf("init raw_timeseries_p.\n");
     if(!dv_p->raw_timeseries_p) dv_p->raw_timeseries_p   = new thrust::device_vector<char>(n_input_data_bytes);  
     //dv_p->raw_timeseries_p   = new cub_device_vector<char>(n_input_data_bytes);  
     if(use_mem_timer) sum_of_mem_times += timer_stop(mem_timer, "mem new raw_timeseries time");
@@ -2029,18 +2066,19 @@ int spectroscopy(int n_cc, 				// N coarse chans
     //
     // Copy to the device
     //
-//print_current_time("right before time series copy");
+    //print_current_time("right before time series copy");
     if(use_timer) timer_start(timer);
+    printf("copying raw timeseries.\n");
     thrust::copy(h_raw_timeseries, h_raw_timeseries + n_input_data_bytes / sizeof(char),
                  dv_p->raw_timeseries_p->begin());
     if(use_timer) sum_of_times += timer_stop(timer, "H2D time");
     if(track_gpu_memory) get_gpu_mem_info("right after time series copy");
-
-//print_current_time("right before sem wait");
+    printf("copied raw timeseries.\n");
+    //print_current_time("right before sem wait");
     if(use_sem_timer) timer_start(sem_timer);
-	sem_wait(gpu_sem);
+	//sem_wait(gpu_sem);
     if(use_sem_timer) sem_time = timer_stop(sem_timer, "sem wait time");
-//print_current_time("right after sem wait");
+    //print_current_time("right after sem wait");
 
     // allocate (and delete - see below) 
     if(use_mem_timer) timer_start(mem_timer);
@@ -2059,11 +2097,13 @@ int spectroscopy(int n_cc, 				// N coarse chans
     if(use_mem_timer) sum_of_mem_times += timer_stop(mem_timer, "mem new hit_baselines_p time");
 
     if(use_mem_timer) timer_start(mem_timer);
+    printf("start to init cfft data.\n");
     #ifndef CFFT
         if(!dv_p->fft_data_p) dv_p->fft_data_p         = new thrust::device_vector<float>(n_ts+1);    // FFT input
     #else
+        printf("init cfft data.\n");
         // if we use cfft, the input data type is float2
-        if(!dv_p->cfft_data_p) dv_p->cfft_data_p         = new thrust::device_vector<float2>(n_fc);    // FFT input
+        if(!dv_p->cfft_data_p) dv_p->cfft_data_p         = new thrust::device_vector<float2>(n_fc+1);    // FFT input
     #endif
     //dv_p->fft_data_p         = new cub_device_vector<float>(n_ts);         			// FFT input
     if(use_mem_timer) sum_of_mem_times += timer_stop(mem_timer, "mem new fft_data_p time");
@@ -2094,6 +2134,7 @@ int spectroscopy(int n_cc, 				// N coarse chans
                     dv_p->fft_data_p->begin(),
                     convert_real_8b_to_float());
     #else
+        printf("convert char to uint16.\n");
         //convert 2*char to 1*uint16, so that we can create float2 type for cfft
         uint16_t *raw_timeseries_u16_p = (uint16_t *)thrust::raw_pointer_cast(&((*dv_p->raw_timeseries_p)[0]));
         thrust::device_ptr<uint16_t>raw_timeseries_u16_ptr(raw_timeseries_u16_p);
@@ -2129,24 +2170,28 @@ int spectroscopy(int n_cc, 				// N coarse chans
     // FFT. We create and destroy the cufft plan each time around in order to
     // conserve the considerable amount of GPU memory that the plan requires. 
    	if(use_timer) timer_start(timer);
+    printf("do fft.\n");
+    /*
    		create_fft_plan_1d(fft_plan_p, cufft_config.istride, cufft_config.idist, 
                        cufft_config.ostride, cufft_config.odist, cufft_config.nfft_, 
                        cufft_config.nbatch, cufft_config.fft_type);                 // plan FFT
-   	if(use_timer) sum_of_times += timer_stop(timer, "cufft plan time");
+   	*/
+    if(use_timer) sum_of_times += timer_stop(timer, "cufft plan time");
     #ifndef CFFT
         do_r2c_fft                      (fft_plan_p, fft_input_ptr, fft_output_ptr);    // compute FFT
     #else
-        do_fft                      (fft_plan_p, fft_input_ptr, fft_output_ptr);    // compute FFT
+        //do_fft                      (fft_plan_p, fft_input_ptr, fft_output_ptr);    // compute FFT
     #endif
     if(track_gpu_memory) get_gpu_mem_info("right after FFT");
-    cufftDestroy(*fft_plan_p);
+    //cufftDestroy(*fft_plan_p);
     if(track_gpu_memory) get_gpu_mem_info("right after FFT plan destruction");
-
+    printf("cfft_cal.\n");
 	//dv_p->fft_data_out_p->erase(dv_p->fft_data_out_p->end());
     cfft_cal<<<dimgrid,dimblock>>>(fft_output_ptr);
     //
     // Form power spectrum
     //
+    printf("compute_power_spectrum.\n");
     compute_power_spectrum      (dv_p, fft_output_ptr, n_fc);                                         // compute power spectrum
 
     // done with the timeseries and FFTs - delete the associated GPU memory
@@ -2175,7 +2220,7 @@ if(use_thread_sync) cudaThreadSynchronize();
 
     if(use_mem_timer) timer_start(mem_timer);
     //if(!dv_p->baseline_p) dv_p->baseline_p         = new thrust::device_vector<float>(n_element);
-    float *baseline_p = (float*)fft_input_ptr + n_element;
+    float *baseline_p = ((float*)fft_input_ptr) + n_element;
     //if(!dv_p->baseline_p) dv_p->baseline_p         = dv_p->fft_data_p  + sizeof(float)*n_element;
     //dv_p->baseline_p         = new cub_device_vector<float>(n_element);
     if(use_mem_timer) sum_of_mem_times += timer_stop(mem_timer, "mem new baseline_p time");
@@ -2184,7 +2229,13 @@ if(use_thread_sync) cudaThreadSynchronize();
 
     if(use_mem_timer) timer_start(mem_timer);
     //if(!dv_p->normalised_p) dv_p->normalised_p       = new thrust::device_vector<float>(n_element);
-    if(!dv_p->normalised_p) dv_p->normalised_p       = dv_p->fft_data_p;
+    #ifndef CFFT
+        if(!dv_p->normalised_p) dv_p->normalised_p       = dv_p->fft_data_p;
+    #else
+        dv_p->normalised_ptr       = (float*)fft_input_ptr;
+        thrust::device_ptr<float> dev_ptr(dv_p->normalised_ptr);
+        dv_p->normalised_dev_ptr = dev_ptr;
+    #endif
     //dv_p->normalised_p       = new cub_device_vector<float>(n_element);
     if(use_mem_timer) sum_of_mem_times += timer_stop(mem_timer, "mem new normalised_p time");
 
@@ -2192,7 +2243,12 @@ if(use_thread_sync) cudaThreadSynchronize();
 
     if(use_mem_timer) timer_start(mem_timer);
     //if(!dv_p->scanned_p) dv_p->scanned_p          = new thrust::device_vector<float>(n_element);
-    if(!dv_p->scanned_p) dv_p->scanned_p          = dv_p->fft_data_p;
+    #ifndef CFFT
+        if(!dv_p->scanned_p) dv_p->scanned_p          = dv_p->fft_data_p;
+    #else
+        dv_p->scanned_ptr = dv_p->normalised_ptr;
+        dv_p->scanned_dev_ptr = dv_p->normalised_dev_ptr;
+    #endif
     //dv_p->scanned_p          = new cub_device_vector<float>(n_element);
     if(use_mem_timer) sum_of_mem_times += timer_stop(mem_timer, "mem new scanned_p time");
 
@@ -2202,10 +2258,12 @@ if(use_thread_sync) cudaThreadSynchronize();
     // Power normalization
     //		
 //fprintf(stderr, "n_fc = %d n_element = %d n_ts = %d\n", n_fc, n_element, n_ts);
-    //compute_baseline            (dv_p, n_fc, n_element, smooth_scale);   
+    //compute_baseline            (dv_p, n_fc, n_element, smooth_scale);  
+    printf("compute_baseline...\n"); 
     compute_baseline_memopt            (dv_p, baseline_p, n_fc, n_element, smooth_scale); 
+    printf("compute_baseline finished.\n");
     if(track_gpu_memory) get_gpu_mem_info("right after baseline computation");
-if(use_thread_sync) cudaThreadSynchronize();
+    if(use_thread_sync) cudaThreadSynchronize();
 
     if(use_mem_timer) timer_start(mem_timer);
     //..delete(dv_p->scanned_p);          
@@ -2213,11 +2271,13 @@ if(use_thread_sync) cudaThreadSynchronize();
 
     if(track_gpu_memory) get_gpu_mem_info("right after scanned vector deletion");
     //normalize_power_spectrum    (dv_p);
+    printf("normalize_power_spectrum.\n");
     normalize_power_spectrum_memopt    (dv_p, baseline_p);
 
     // Hit finding
     if(track_gpu_memory) get_gpu_mem_info("right after spectrum normalization");
     //nhits = find_hits           (dv_p, n_element, maxhits, power_thresh);
+    printf("find hits.\n");
     nhits = find_hits_memopt           (dv_p, baseline_p, n_element, maxhits, power_thresh);
     if(track_gpu_memory) get_gpu_mem_info("right after find hits");
     // TODO should probably report if nhits == maxgpuhits, ie overflow
@@ -2292,7 +2352,7 @@ if(use_thread_sync) cudaThreadSynchronize();
     //get_singleton_device_allocator()->free_all_cached();    // free all cub allocations
    	//if(use_mem_timer) sum_of_mem_times += timer_stop(mem_timer, "mem free_all_cached 2 time");
 
-	sem_post(gpu_sem);
+	//sem_post(gpu_sem);
 
     if(use_total_gpu_timer) total_gpu_timer.stop();
     if(use_total_gpu_timer) cout << "Sum of GPU times:         \t" << sum_of_times << endl;
