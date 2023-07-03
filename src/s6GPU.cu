@@ -554,7 +554,7 @@ void compute_baseline(device_vectors_t *dv_p, int n_fc, int n_element, float smo
 
 void compute_baseline_memopt(device_vectors_t *dv_p, float* baseline_p, int n_fc, int n_element, float smooth_scale) {
 // Compute smoothed power spectrum baseline
-    printf("in compute_baseline_memopt...\n");
+    //printf("in compute_baseline_memopt...\n");
     using thrust::make_transform_iterator;
     using thrust::make_counting_iterator;
 
@@ -562,7 +562,7 @@ void compute_baseline_memopt(device_vectors_t *dv_p, float* baseline_p, int n_fc
     Stopwatch timer;
     if(use_timer) timer_start(timer);
     #ifndef CFFT
-    printf("going to do scan CFFT...\n");
+    //printf("going to do scan CFFT...\n");
         thrust::exclusive_scan_by_key(make_transform_iterator(make_counting_iterator<int>(0),
                                                             //_1 / n_fc),
                                                             divide_by<int>(n_fc)),
@@ -572,7 +572,7 @@ void compute_baseline_memopt(device_vectors_t *dv_p, float* baseline_p, int n_fc
                                     dv_p->powspec_p->begin(),
                                     dv_p->scanned_p->begin());
     #else
-    printf("going to do scan...\n");
+    //printf("going to do scan...\n");
         thrust::exclusive_scan_by_key(make_transform_iterator(make_counting_iterator<int>(0),
                                                             //_1 / n_fc),
                                                             divide_by<int>(n_fc)),
@@ -592,7 +592,7 @@ void compute_baseline_memopt(device_vectors_t *dv_p, float* baseline_p, int n_fc
     #else
         const float* d_scanned_ptr = dv_p->scanned_ptr;
     #endif
-    printf("going to do transform...\n");
+    //printf("going to do transform...\n");
   //const float* d_scanned_ptr = thrust::raw_pointer_cast(&(*dv.scanned_p   )[0]);
     thrust::device_ptr<float> baseline_ptr(baseline_p);
     thrust::transform(make_counting_iterator<uint>(0),
@@ -2002,7 +2002,7 @@ int spectroscopy(int n_cc, 				// N coarse chans
                  size_t n_input_data_bytes,
                  s6_output_block_t *s6_output_block,
 				 sem_t * gpu_sem) {
-printf("Start in spectroscopy.\n");
+//printf("Start in spectroscopy.\n");
 // Note - beam or subspectra. Sometimes we are passed a beam's worth of coarse 
 // channels (eg, at AO). At other times we are passed a subspectrum of channels  
 // (eg, at GBT). In both cases, each course channel runs the full length of fine
@@ -2041,9 +2041,9 @@ printf("Start in spectroscopy.\n");
                 n_pol, n_element, n_input_data_bytes, (double)n_input_data_bytes/1024/1024/1024, input_data);
         get_gpu_mem_info((const char *)comment);
     }
-    printf("init_device_vectors.\n");
+    //printf("init_device_vectors.\n");
 	if(!dv_p) dv_p = init_device_vectors(); 
-    printf("finish init_device_vectors.\n");
+    //printf("finish init_device_vectors.\n");
     char * h_raw_timeseries = (char *)input_data;
 
 //#define DUMP_RAW_SAMPLES
@@ -2058,7 +2058,7 @@ printf("Start in spectroscopy.\n");
     if(use_total_gpu_timer) total_gpu_timer.start();
 
     if(use_mem_timer) timer_start(mem_timer);
-    printf("init raw_timeseries_p.\n");
+    //printf("init raw_timeseries_p.\n");
     if(!dv_p->raw_timeseries_p) dv_p->raw_timeseries_p   = new thrust::device_vector<char>(n_input_data_bytes);  
     //dv_p->raw_timeseries_p   = new cub_device_vector<char>(n_input_data_bytes);  
     if(use_mem_timer) sum_of_mem_times += timer_stop(mem_timer, "mem new raw_timeseries time");
@@ -2068,12 +2068,12 @@ printf("Start in spectroscopy.\n");
     //
     //print_current_time("right before time series copy");
     if(use_timer) timer_start(timer);
-    printf("copying raw timeseries.\n");
+    //printf("copying raw timeseries.\n");
     thrust::copy(h_raw_timeseries, h_raw_timeseries + n_input_data_bytes / sizeof(char),
                  dv_p->raw_timeseries_p->begin());
     if(use_timer) sum_of_times += timer_stop(timer, "H2D time");
     if(track_gpu_memory) get_gpu_mem_info("right after time series copy");
-    printf("copied raw timeseries.\n");
+    //printf("copied raw timeseries.\n");
     //print_current_time("right before sem wait");
     if(use_sem_timer) timer_start(sem_timer);
 	//sem_wait(gpu_sem);
@@ -2097,11 +2097,11 @@ printf("Start in spectroscopy.\n");
     if(use_mem_timer) sum_of_mem_times += timer_stop(mem_timer, "mem new hit_baselines_p time");
 
     if(use_mem_timer) timer_start(mem_timer);
-    printf("start to init cfft data.\n");
+    //printf("start to init cfft data.\n");
     #ifndef CFFT
         if(!dv_p->fft_data_p) dv_p->fft_data_p         = new thrust::device_vector<float>(n_ts+1);    // FFT input
     #else
-        printf("init cfft data.\n");
+        //printf("init cfft data.\n");
         // if we use cfft, the input data type is float2
         if(!dv_p->cfft_data_p) dv_p->cfft_data_p         = new thrust::device_vector<float2>(n_fc+1);    // FFT input
     #endif
@@ -2134,7 +2134,7 @@ printf("Start in spectroscopy.\n");
                     dv_p->fft_data_p->begin(),
                     convert_real_8b_to_float());
     #else
-        printf("convert char to uint16.\n");
+        //printf("convert char to uint16.\n");
         //convert 2*char to 1*uint16, so that we can create float2 type for cfft
         uint16_t *raw_timeseries_u16_p = (uint16_t *)thrust::raw_pointer_cast(&((*dv_p->raw_timeseries_p)[0]));
         thrust::device_ptr<uint16_t>raw_timeseries_u16_ptr(raw_timeseries_u16_p);
@@ -2170,7 +2170,7 @@ printf("Start in spectroscopy.\n");
     // FFT. We create and destroy the cufft plan each time around in order to
     // conserve the considerable amount of GPU memory that the plan requires. 
    	if(use_timer) timer_start(timer);
-    printf("do fft...\n");
+    //printf("do fft...\n");
     
    	create_fft_plan_1d(fft_plan_p, cufft_config.istride, cufft_config.idist, 
                        cufft_config.ostride, cufft_config.odist, cufft_config.nfft_, 
@@ -2185,14 +2185,14 @@ printf("Start in spectroscopy.\n");
     if(track_gpu_memory) get_gpu_mem_info("right after FFT");
     cufftDestroy(*fft_plan_p);
     if(track_gpu_memory) get_gpu_mem_info("right after FFT plan destruction");
-    printf("cfft_cal.\n");
+    //printf("cfft_cal.\n");
 	//dv_p->fft_data_out_p->erase(dv_p->fft_data_out_p->end());
     cfft_cal<<<dimgrid,dimblock>>>(fft_output_ptr);
     //
     // Form power spectrum
     //
     cudaDeviceSynchronize();
-    printf("compute_power_spectrum.\n");
+    //printf("compute_power_spectrum.\n");
     compute_power_spectrum      (dv_p, fft_output_ptr, n_fc);                                         // compute power spectrum
 
     // done with the timeseries and FFTs - delete the associated GPU memory
@@ -2260,9 +2260,9 @@ if(use_thread_sync) cudaThreadSynchronize();
     //		
 //fprintf(stderr, "n_fc = %d n_element = %d n_ts = %d\n", n_fc, n_element, n_ts);
     //compute_baseline            (dv_p, n_fc, n_element, smooth_scale);  
-    printf("compute_baseline...\n"); 
+    //printf("compute_baseline...\n"); 
     compute_baseline_memopt            (dv_p, baseline_p, n_fc, n_element, smooth_scale); 
-    printf("compute_baseline finished.\n");
+    //printf("compute_baseline finished.\n");
     if(track_gpu_memory) get_gpu_mem_info("right after baseline computation");
     if(use_thread_sync) cudaThreadSynchronize();
 
@@ -2272,13 +2272,13 @@ if(use_thread_sync) cudaThreadSynchronize();
 
     if(track_gpu_memory) get_gpu_mem_info("right after scanned vector deletion");
     //normalize_power_spectrum    (dv_p);
-    printf("normalize_power_spectrum.\n");
+    //printf("normalize_power_spectrum.\n");
     normalize_power_spectrum_memopt    (dv_p, baseline_p);
 
     // Hit finding
     if(track_gpu_memory) get_gpu_mem_info("right after spectrum normalization");
     //nhits = find_hits           (dv_p, n_element, maxhits, power_thresh);
-    printf("find hits.\n");
+    //printf("find hits.\n");
     nhits = find_hits_memopt           (dv_p, baseline_p, n_element, maxhits, power_thresh);
     if(track_gpu_memory) get_gpu_mem_info("right after find hits");
     // TODO should probably report if nhits == maxgpuhits, ie overflow
