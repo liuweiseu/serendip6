@@ -92,7 +92,7 @@ device_vectors_t * init_device_vectors() {
 #define PI 3.1415926535
 #define WGS 1024
 #define NFFT    (128*1024*1024)
-dim3 dimgrid(NFFT/WGS,1);
+dim3 dimgrid(NFFT/WGS/2,1);
 dim3 dimblock(WGS,1);
 __device__ float gpusin(int n)
 {
@@ -110,8 +110,8 @@ __global__ void cfft_cal(float2 *fft_out_p)
     int pos = (blockIdx.x + blockIdx.y * gridDim.x) * WGS + threadIdx.x;
     x_r = fft_out_p[pos].x;
     x_i = fft_out_p[pos].y;
-    x_n_r = fft_out_p[(NFFT-pos)%NFFT].x;
-    x_n_i = fft_out_p[(NFFT-pos)%NFFT].y;
+    x_n_r = fft_out_p[(NFFT-pos-1)].x;
+    x_n_i = fft_out_p[(NFFT-pos-1)].y;
     
     __shared__ float x_r_p, x_r_n, x_i_p, x_i_n;
     // cal fft_out_p[pos]
@@ -120,12 +120,12 @@ __global__ void cfft_cal(float2 *fft_out_p)
     x_i_p = x_i + x_n_i;
     x_i_n = x_i - x_n_i;
     fft_out_p[pos].x = x_r_p + gpucos(pos)*x_i_p - gpusin(pos)*x_r_n;
-    fft_out_p[pos].y = x_i_n - gpucos(pos)*x_i_p - gpucos(pos)*x_r_n;
+    fft_out_p[pos].y = x_i_n - gpusin(pos)*x_i_p - gpucos(pos)*x_r_n;
     // cal fft_out_p[NFFT-pos]
     x_r_n = x_n_r - x_r;
     x_i_n = x_n_i - x_i;
-    fft_out_p[(NFFT-pos)%NFFT].x = x_r_p + gpucos(pos)*x_i_p - gpusin(pos)*x_r_n;
-    fft_out_p[(NFFT-pos)%NFFT].y = x_i_n - gpucos(pos)*x_i_p - gpucos(pos)*x_r_n;
+    fft_out_p[(NFFT-pos-1)].x = x_r_p + gpucos((NFFT-pos-1))*x_i_p - gpusin((NFFT-pos-1))*x_r_n;
+    fft_out_p[(NFFT-pos-1)].y = x_i_n - gpusin((NFFT-pos-1))*x_i_p - gpucos((NFFT-pos-1))*x_r_n;
 }
 
 int init_device(int gpu_dev) {
