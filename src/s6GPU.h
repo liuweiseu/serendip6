@@ -56,7 +56,7 @@ typedef struct {
 typedef struct {
     thrust::device_vector<float> * fft_data_p;  
     thrust::device_vector<float2> * cfft_data_p;           
-    thrust::device_vector<char>  * raw_timeseries_p;       // input time series, correctly ordered
+    thrust::device_vector<uint16_t>  * raw_timeseries_p;       // input time series, correctly ordered
     thrust::device_vector<float2> * fft_data_out_p;         
     thrust::device_vector<float>  * powspec_p;              // detected power spectra
     thrust::device_vector<float>  * scanned_p;              // mean powers
