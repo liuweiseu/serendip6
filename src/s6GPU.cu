@@ -110,8 +110,8 @@ __global__ void cfft_cal(float2 *fft_out_p)
     int pos = (blockIdx.x + blockIdx.y * gridDim.x) * WGS + threadIdx.x;
     x_r = fft_out_p[pos].x;
     x_i = fft_out_p[pos].y;
-    x_n_r = fft_out_p[(NFFT-pos-1)].x;
-    x_n_i = fft_out_p[(NFFT-pos-1)].y;
+    x_n_r = fft_out_p[(NFFT-pos)%NFFT].x;
+    x_n_i = fft_out_p[(NFFT-pos)%NFFT].y;
     
     __shared__ float x_r_p, x_r_n, x_i_p, x_i_n;
     // cal fft_out_p[pos]
@@ -124,8 +124,8 @@ __global__ void cfft_cal(float2 *fft_out_p)
     // cal fft_out_p[NFFT-pos]
     x_r_n = x_n_r - x_r;
     x_i_n = x_n_i - x_i;
-    fft_out_p[(NFFT-pos-1)].x = x_r_p + gpucos((NFFT-pos-1))*x_i_p - gpusin((NFFT-pos-1))*x_r_n;
-    fft_out_p[(NFFT-pos-1)].y = x_i_n - gpusin((NFFT-pos-1))*x_i_p - gpucos((NFFT-pos-1))*x_r_n;
+    fft_out_p[(NFFT-pos)%NFFT].x = x_r_p + gpucos((NFFT-pos)%NFFT)*x_i_p - gpusin((NFFT-pos)%NFFT)*x_r_n;
+    fft_out_p[(NFFT-pos)%NFFT].y = x_i_n - gpusin((NFFT-pos)%NFFT)*x_i_p - gpucos((NFFT-pos)%NFFT)*x_r_n;
 }
 
 int init_device(int gpu_dev) {
@@ -287,7 +287,7 @@ struct convert_real_8b_to_float2
     float2 operator()(uint16_t a) const {
         float2 d;
         d.x = (float)(a&0xff);
-        d.y = (float)(a>>8);
+        d.y = (float)((a>>8)&0xff);
         return d;
     }
 };
@@ -2011,7 +2011,6 @@ int spectroscopy(int n_cc, 				// N coarse chans
 // Note - this version does minimal GPU memory re-allocation.  Our total memory 
 // needs are larger than the capcity of our current GPU (GeForce GTX 780 Ti with 
 // 3071MB). So we allocate as needed and delete memory as soon as it is no longer needed.
-
     Stopwatch timer; 
     Stopwatch total_gpu_timer;
     Stopwatch mem_timer;
@@ -2044,9 +2043,9 @@ int spectroscopy(int n_cc, 				// N coarse chans
     //printf("init_device_vectors.\n");
 	if(!dv_p) dv_p = init_device_vectors(); 
     //printf("finish init_device_vectors.\n");
-    char * h_raw_timeseries = (char *)input_data;
-
-//#define DUMP_RAW_SAMPLES
+    //char * h_raw_timeseries = (char *)input_data;
+    char2 * h_raw_timeseries = (char2 *)input_data;
+    //#define DUMP_RAW_SAMPLES
 #ifdef DUMP_RAW_SAMPLES
     static int cnt = 0;
     if(cnt++ == 10) {                                                       // wait for 10 buffers to make sure we are settled
@@ -2059,7 +2058,8 @@ int spectroscopy(int n_cc, 				// N coarse chans
 
     if(use_mem_timer) timer_start(mem_timer);
     //printf("init raw_timeseries_p.\n");
-    if(!dv_p->raw_timeseries_p) dv_p->raw_timeseries_p   = new thrust::device_vector<char>(n_input_data_bytes);  
+    //if(!dv_p->raw_timeseries_p) dv_p->raw_timeseries_p   = new thrust::device_vector<char>(n_input_data_bytes);  
+    if(!dv_p->raw_timeseries_p) dv_p->raw_timeseries_p   = new thrust::device_vector<char2>(n_input_data_bytes/2);  
     //dv_p->raw_timeseries_p   = new cub_device_vector<char>(n_input_data_bytes);  
     if(use_mem_timer) sum_of_mem_times += timer_stop(mem_timer, "mem new raw_timeseries time");
 
@@ -2069,7 +2069,9 @@ int spectroscopy(int n_cc, 				// N coarse chans
     //print_current_time("right before time series copy");
     if(use_timer) timer_start(timer);
     //printf("copying raw timeseries.\n");
-    thrust::copy(h_raw_timeseries, h_raw_timeseries + n_input_data_bytes / sizeof(char),
+    //thrust::copy(h_raw_timeseries, h_raw_timeseries + n_input_data_bytes / sizeof(char),
+    //             dv_p->raw_timeseries_p->begin());
+    thrust::copy(h_raw_timeseries, h_raw_timeseries + n_input_data_bytes / sizeof(char2),
                  dv_p->raw_timeseries_p->begin());
     if(use_timer) sum_of_times += timer_stop(timer, "H2D time");
     if(track_gpu_memory) get_gpu_mem_info("right after time series copy");
@@ -2136,12 +2138,18 @@ int spectroscopy(int n_cc, 				// N coarse chans
     #else
         //printf("convert char to uint16.\n");
         //convert 2*char to 1*uint16, so that we can create float2 type for cfft
+        /*
         uint16_t *raw_timeseries_u16_p = (uint16_t *)thrust::raw_pointer_cast(&((*dv_p->raw_timeseries_p)[0]));
         thrust::device_ptr<uint16_t>raw_timeseries_u16_ptr(raw_timeseries_u16_p);
         thrust::transform(raw_timeseries_u16_ptr,
                           raw_timeseries_u16_ptr + n_fc,
                           dv_p->cfft_data_p->begin(),
                           convert_real_8b_to_float2());
+                          */
+        thrust::transform(dv_p->raw_timeseries_p->begin(), 
+                      dv_p->raw_timeseries_p->end(),
+                      dv_p->cfft_data_p->begin(),
+                      convert_complex_8b_to_float());
     #endif
     if(use_thread_sync) cudaThreadSynchronize();
     if(use_timer) sum_of_times += timer_stop(timer, "Unpack time");
