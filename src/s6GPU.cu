@@ -92,7 +92,7 @@ device_vectors_t * init_device_vectors() {
 #define PI 3.1415926535
 #define WGS 1024
 #define NFFT    (128*1024*1024)
-dim3 dimgrid(NFFT/WGS,1);
+dim3 dimgrid(NFFT/WGS/2,1);
 dim3 dimblock(WGS,1);
 __device__ float gpusin(int n)
 {
@@ -105,7 +105,8 @@ __device__ float gpucos(int n)
 
 __global__ void cfft_cal(float2 *fft_out_p)
 {
-    __shared__ float x_r, x_i, x_n_r, x_n_i;
+    //__shared__ float x_r, x_i, x_n_r, x_n_i;
+    float x_r, x_i, x_n_r, x_n_i;
     // get data out from global memory
     int pos = (blockIdx.x + blockIdx.y * gridDim.x) * WGS + threadIdx.x;
     x_r = fft_out_p[pos].x;
@@ -113,19 +114,25 @@ __global__ void cfft_cal(float2 *fft_out_p)
     x_n_r = fft_out_p[(NFFT-pos)%NFFT].x;
     x_n_i = fft_out_p[(NFFT-pos)%NFFT].y;
     
-    __shared__ float x_r_p, x_r_n, x_i_p, x_i_n;
+    //__shared__ float x_r_p, x_r_n, x_i_p, x_i_n;
+    float x_r_p, x_r_n, x_i_p, x_i_n;
+
     // cal fft_out_p[pos]
     x_r_p = x_r + x_n_r;
     x_r_n = x_r - x_n_r;
     x_i_p = x_i + x_n_i;
     x_i_n = x_i - x_n_i;
+    
     fft_out_p[pos].x = x_r_p + gpucos(pos)*x_i_p - gpusin(pos)*x_r_n;
     fft_out_p[pos].y = x_i_n - gpusin(pos)*x_i_p - gpucos(pos)*x_r_n;
+    
     // cal fft_out_p[NFFT-pos]
+    
     x_r_n = x_n_r - x_r;
     x_i_n = x_n_i - x_i;
     fft_out_p[(NFFT-pos)%NFFT].x = x_r_p + gpucos((NFFT-pos)%NFFT)*x_i_p - gpusin((NFFT-pos)%NFFT)*x_r_n;
     fft_out_p[(NFFT-pos)%NFFT].y = x_i_n - gpusin((NFFT-pos)%NFFT)*x_i_p - gpucos((NFFT-pos)%NFFT)*x_r_n;
+    
 }
 
 int init_device(int gpu_dev) {
@@ -285,12 +292,23 @@ struct convert_real_8b_to_float2
     : public thrust::unary_function<uint16_t,float2> {
     inline __host__ __device__
     float2 operator()(uint16_t a) const {
+        /*
         float2 d;
         d.x = (float)(a&0xff);
-        d.y = (float)(a>>8);
+        d.y = (float)((a>>8)&0xff);
         return d;
+        */
+       return make_float2(a&0xff, a>>8);
     }
 };
+//wei
+dim3 dimgrid_f2(NFFT/WGS,1);
+__global__ void convert_8b_to_float2(char *din, float2 *dout)
+{
+    int pos = (blockIdx.x + blockIdx.y * gridDim.x) * WGS + threadIdx.x;
+    dout[pos].x = (float)din[2*pos];
+    dout[pos].y = (float)din[2*pos+1];
+}
 
 struct compute_complex_power
     : public thrust::unary_function<float2,float> {
@@ -2063,12 +2081,16 @@ int spectroscopy(int n_cc, 				// N coarse chans
     //
     // Unpack from 8-bit to floats
     // 
-
+    /*
     thrust::transform(dv_p->raw_timeseries_p->begin(), 
                     dv_p->raw_timeseries_p->end(),
                     dv_p->cfft_data_p->begin(),
                     convert_real_8b_to_float2());
-
+    */
+   const uint16_t* d_raw_data_ptr = thrust::raw_pointer_cast(&(*dv_p->raw_timeseries_p)[0]);
+   float2*  fft_input_ptr   = (float2*)thrust::raw_pointer_cast(&((*dv_p->cfft_data_p)[0]));
+    convert_8b_to_float2<<<dimgrid_f2,dimblock>>>((char*)d_raw_data_ptr, fft_input_ptr);
+    cudaDeviceSynchronize();
     delete(dv_p->raw_timeseries_p); dv_p->raw_timeseries_p = 0;   
     // end fluffing to FFT input
     
@@ -2080,7 +2102,7 @@ int spectroscopy(int n_cc, 				// N coarse chans
     // This is not true anymore - we analyze all inputs in one go. These
     // comments and this way of assigning fft_input_ptr and fft_output_ptr
     // are left as is in case we need to go back to one-input-at-a-time.
-    float2*  fft_input_ptr   = (float2*)thrust::raw_pointer_cast(&((*dv_p->cfft_data_p)[0]));
+    //float2*  fft_input_ptr   = (float2*)thrust::raw_pointer_cast(&((*dv_p->cfft_data_p)[0]));
     float2*  fft_output_ptr  = (float2*)thrust::raw_pointer_cast(&((*dv_p->cfft_data_p)[0]));
 
     float *baseline_p = ((float*)fft_input_ptr) + n_element;
