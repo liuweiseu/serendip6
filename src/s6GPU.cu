@@ -2047,10 +2047,6 @@ int spectroscopy(int n_cc, 				// N coarse chans
     sum_of_times=0;
     sum_of_mem_times=0;    
 
-    printf("n_element = %d\n", n_element);
-    printf("n_fc = %d\n", n_fc);
-    printf("n_ts = %d\n",n_ts);
-    printf("n_input_data_bytes = %ld\n", n_input_data_bytes);
     //printf("init_device_vectors.\n");
 	if(!dv_p) dv_p = init_device_vectors(); 
     //printf("finish init_device_vectors.\n");
