@@ -358,10 +358,10 @@ int write_etfits_mro(s6_output_databuf_t *db, int block_idx, etfits_t *etf, mros
     //for(int i=0; i < N_BEAMS*N_POLS_PER_BEAM; i++) {
     for(int i=0; i < N_BORS*N_POLS_PER_BEAM; i++) {
         etf->hits_hdr[i].time    = db->block[block_idx].header.time_sec + (double)db->block[block_idx].header.time_nsec / 1000000000.0;
-        etf->hits_hdr[i].ra      = mrostatus_p->SRA[etf->primary_hdr.beam]; // TODO: Check--This is source RA or commanded RA??
-        etf->hits_hdr[i].dec     = mrostatus_p->SDEC[etf->primary_hdr.beam];// TODO: Check--This is source DEC or commanded DEC??
+        etf->hits_hdr[i].ra      = mrostatus_p->SRA[etf->primary_hdr.beam]; 
+        etf->hits_hdr[i].dec     = mrostatus_p->SDEC[etf->primary_hdr.beam];
         etf->hits_hdr[i].beampol = etf->primary_hdr.beam * 2 + etf->primary_hdr.pol;       
-//fprintf(stderr, "beam %d pol %d beampol %d\n", etf->primary_hdr.beam, etf->primary_hdr.pol, etf->hits_hdr[i].beampol);
+        //fprintf(stderr, "beam %d pol %d beampol %d\n", etf->primary_hdr.beam, etf->primary_hdr.pol, etf->hits_hdr[i].beampol);
     }
 
     if(! *status_p) write_integration_header_mro(etf, mrostatus_p);

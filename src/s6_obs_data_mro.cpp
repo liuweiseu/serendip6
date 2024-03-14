@@ -202,8 +202,8 @@ int get_obs_mro_info_from_redis(mrostatus_t * mrostatus,
 	// RA and DEC gathered by name rather than a looped redis query so that all meta data is of a 
 	// single point in time
 	if(!rv && !(rv = s6_redis_get(c,&reply,"get source")))  {s6_strcpy(mrostatus->SOURCE,reply->str);       freeReplyObject(reply);}
-    if(!rv && !(rv = s6_redis_get(c,&reply,"get sra")))     {s6_strcpy(mrostatus->SRA,reply->str);          freeReplyObject(reply);}
-    if(!rv && !(rv = s6_redis_get(c,&reply,"get sdec")))    {s6_strcpy(mrostatus->SDEC,reply->str);         freeReplyObject(reply);}
+    if(!rv && !(rv = s6_redis_get(c,&reply,"get raa")))     {mrostatus->SRA = atof(reply->str);             freeReplyObject(reply);}
+    if(!rv && !(rv = s6_redis_get(c,&reply,"get dea")))     {mrostatus->SDEC = atof(reply->str);            freeReplyObject(reply);}
     if(!rv && !(rv = s6_redis_get(c,&reply,"get rac")))     {s6_strcpy(mrostatus->RAC,reply->str);          freeReplyObject(reply);}
     if(!rv && !(rv = s6_redis_get(c,&reply,"get dec")))     {s6_strcpy(mrostatus->DEC,reply->str);          freeReplyObject(reply);}
     if(!rv && !(rv = s6_redis_get(c,&reply,"get raer")))    {s6_strcpy(mrostatus->RAER,reply->str);         freeReplyObject(reply);}
