@@ -24,20 +24,20 @@ typedef struct mrostatus {
 
    char     RECEIVER[MROSTATUS_STRING_SIZE];  
 
-   double   ADCRMS;							// ADC RMS
-   time_t   ADCRMSTM;						// ADC RMS timestamp 
+   double   ADCRMS;							         // ADC RMS
+   time_t   ADCRMSTM;						         // ADC RMS timestamp 
    int      DUMPTIME;
    int      DUMPVOLT;
 
-   int      coarse_chan_id;                       // will always be 0 for MRO (not coarse channelized)
+   int      coarse_chan_id;                     // will always be 0 for MRO (not coarse channelized)
    
    char     SOURCE[MROSTATUS_STRING_SIZE];      // source name
    double   SRA;                                // source ra
    double   SDEC;                               // source dec
-   char     RAC[MROSTATUS_STRING_SIZE];         // ra commanded
-   char     DEC[MROSTATUS_STRING_SIZE];         // dec commanded
-   char     RAER[MROSTATUS_STRING_SIZE];        // ra error
-   char     DECER[MROSTATUS_STRING_SIZE];       // dec error
+   double   RAC;                                // ra commanded
+   double   DEC;                                // dec commanded
+   double   RAER;                               // ra error
+   double   DECER;                              // dec error
    double   AZC;                                // az commanded
    double   ELC;                                // el commanded
    double   AZA;                                // az actual

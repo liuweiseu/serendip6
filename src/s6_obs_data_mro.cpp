@@ -204,10 +204,10 @@ int get_obs_mro_info_from_redis(mrostatus_t * mrostatus,
 	if(!rv && !(rv = s6_redis_get(c,&reply,"get source")))  {s6_strcpy(mrostatus->SOURCE,reply->str);       freeReplyObject(reply);}
     if(!rv && !(rv = s6_redis_get(c,&reply,"get raa")))     {mrostatus->SRA = atof(reply->str);             freeReplyObject(reply);}
     if(!rv && !(rv = s6_redis_get(c,&reply,"get dea")))     {mrostatus->SDEC = atof(reply->str);            freeReplyObject(reply);}
-    if(!rv && !(rv = s6_redis_get(c,&reply,"get rac")))     {s6_strcpy(mrostatus->RAC,reply->str);          freeReplyObject(reply);}
-    if(!rv && !(rv = s6_redis_get(c,&reply,"get dec")))     {s6_strcpy(mrostatus->DEC,reply->str);          freeReplyObject(reply);}
-    if(!rv && !(rv = s6_redis_get(c,&reply,"get raer")))    {s6_strcpy(mrostatus->RAER,reply->str);         freeReplyObject(reply);}
-    if(!rv && !(rv = s6_redis_get(c,&reply,"get decer")))   {s6_strcpy(mrostatus->DECER,reply->str);        freeReplyObject(reply);}
+    if(!rv && !(rv = s6_redis_get(c,&reply,"get rac")))     {mrostatus->RAC = atof(reply->str);             freeReplyObject(reply);}
+    if(!rv && !(rv = s6_redis_get(c,&reply,"get dec")))     {mrostatus->DEC = atof(reply->str);             freeReplyObject(reply);}
+    if(!rv && !(rv = s6_redis_get(c,&reply,"get raer")))    {mrostatus->RAER = atof(reply->str);            freeReplyObject(reply);}
+    if(!rv && !(rv = s6_redis_get(c,&reply,"get decer")))   {mrostatus->DECER = atof(reply->str);           freeReplyObject(reply);}
     if(!rv && !(rv = s6_redis_get(c,&reply,"get azc")))     {mrostatus->AZC = atof(reply->str);             freeReplyObject(reply);}
     if(!rv && !(rv = s6_redis_get(c,&reply,"get elc")))     {mrostatus->ELC = atof(reply->str);             freeReplyObject(reply);}
     if(!rv && !(rv = s6_redis_get(c,&reply,"get aza")))     {mrostatus->AZA = atof(reply->str);             freeReplyObject(reply);}
