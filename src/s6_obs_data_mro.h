@@ -32,8 +32,8 @@ typedef struct mrostatus {
    int      coarse_chan_id;                     // will always be 0 for MRO (not coarse channelized)
    
    char     SOURCE[MROSTATUS_STRING_SIZE];      // source name
-   double   SRA;                                // source ra
-   double   SDEC;                               // source dec
+   double   SRA[1];                             // source ra
+   double   SDEC[1];                            // source dec
    double   RAC;                                // ra commanded
    double   DEC;                                // dec commanded
    double   RAER;                               // ra error
